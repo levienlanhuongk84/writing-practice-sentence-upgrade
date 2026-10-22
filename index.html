@@ -779,9 +779,16 @@
 
 /* phones: 16px fields (no iOS zoom on focus) and finger-sized small buttons */
 @media (max-width: 640px) {
-  input:not([type=checkbox]):not([type=radio]), select, textarea { font-size: 16px; }
+  input:not([type=checkbox]):not([type=radio]), select, textarea { font-size: 16px !important; }
   .btn, button.btn, #sign-in, .pw-show { min-height: 40px; }
   #themeBtn { min-width: 40px; min-height: 40px; }
+  .two, .cs, .grid-2, .check, .rep-grid, .kpis, .stats { grid-template-columns: minmax(0, 1fr); }
+  .as-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .two > *, .field { min-width: 0; }
+  select { max-width: 100%; }
+  #admin-assign button, .seg-t button, .rv-tabs button { min-height: 36px; }
+  .sc .v .st { gap: 4px; }
+  .sc .v .st button { min-width: 36px; min-height: 26px; font-size: 1em; border: 1px solid var(--line, #ddd); border-radius: 6px; }
 }
 
   /* ===== LH Master Hero — background art taken from the approved mock (logo, glow, ribbons fixed); only eyebrow / title / 3 chips change.
@@ -1029,7 +1036,7 @@
       <h3>Settings</h3>
       <div class="card" id="admin-settings">
         <p class="vn" id="settings-hint"></p>
-        <div class="two" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+        <div class="two" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))">
           <div class="field"><label for="s-open">Practice status</label><select id="s-open"><option value="1">Open — students can submit</option><option value="0">Closed — no new submissions</option></select></div>
           <div class="field"><label for="s-rank">Ranking visible to students</label><select id="s-rank"><option value="1">Yes — everyone sees the ranking</option><option value="0">No — staff only</option></select></div>
           <div class="field"><label for="s-msg">Message on the start page (optional)</label><input id="s-msg" maxlength="200" placeholder="e.g. Deadline: Friday 20:00"></div>
