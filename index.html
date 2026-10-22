@@ -777,6 +777,13 @@
   .lad-row .model-s { color: var(--good); }
   @media (max-width: 640px) { .lad-row { grid-template-columns: 1fr; } .lad-row > p { grid-column: 1; } .sent-card { padding: 12px 10px; } }
 
+/* phones: 16px fields (no iOS zoom on focus) and finger-sized small buttons */
+@media (max-width: 640px) {
+  input:not([type=checkbox]):not([type=radio]), select, textarea { font-size: 16px; }
+  .btn, button.btn, #sign-in, .pw-show { min-height: 40px; }
+  #themeBtn { min-width: 40px; min-height: 40px; }
+}
+
   /* ===== LH Master Hero — background art taken from the approved mock (logo, glow, ribbons fixed); only eyebrow / title / 3 chips change.
      Geometry measured on the mock at 1997×277 px: 1 mock px = 0.050075cqw. ===== */
   .lh-hero { --u: .050075cqw; container-type: inline-size; position: relative; width: 100%; aspect-ratio: 1997 / 277; overflow: hidden; color: #F7EDFC;
