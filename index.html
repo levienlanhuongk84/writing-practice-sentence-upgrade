@@ -509,7 +509,7 @@
 
   /* ============ review (student preliminary check, teacher marking, released feedback) ============ */
   .rv { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-  @media (max-width: 1100px) { .rv { grid-template-columns: 1fr; } }
+  @media (max-width: 999px) { .rv { grid-template-columns: minmax(0, 1fr); } }
   .rv-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 18px; min-width: 0; }
   .rv-card + .rv-card { margin-top: 0; }
   .rv-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -593,7 +593,7 @@
   .rv-tabs { display: none; gap: 4px; margin-bottom: 10px; border-bottom: 1px solid var(--line); }
   .rv-tabs button { appearance: none; border: 0; background: transparent; padding: 8px 12px; font-family: var(--font-cond); font-weight: 700; color: var(--ink-2); border-bottom: 3px solid transparent; cursor: pointer; }
   .rv-tabs button.on { color: var(--purple-ink); border-bottom-color: var(--purple); }
-  @media (max-width: 1100px) {
+  @media (max-width: 999px) {
     .rv-tabs { display: flex; }
     .rv[data-tab="essay"] .rv-right, .rv[data-tab="marks"] .rv-left { display: none; }
   }
@@ -821,6 +821,49 @@
   .rw-row { grid-template-columns: minmax(0, 1fr); }
   .rw-row > p { grid-column: 1; }
 }
+
+/* ---- review: student's sentences coloured by stage, always-open model ladder, sticky student column (23/10) ---- */
+.essay.staged { white-space: normal; }
+.es-grp { border: 1px solid var(--line); border-radius: 12px; padding: 30px 10px 8px; margin: 0 0 12px; position: relative; background: var(--surface); }
+.es-grp::before { content: attr(data-h); position: absolute; top: 7px; left: 12px; font: 700 .9em var(--font); color: var(--purple-ink); }
+.es-row { --sc: #8B7C99; position: relative; margin: 6px 0; padding: 6px 10px 7px 12px; border-left: 4px solid var(--sc); border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--sc) 9%, transparent); overflow-wrap: anywhere; line-height: 1.8; }
+.es-st2 { --sc: #2A62C4; } .es-st3 { --sc: #DD5A28; } .es-st4 { --sc: #613087; }
+.es-row.opt { border-left-style: dashed; }
+.es-pre { font-size: 0; }
+.es-pre::before { content: attr(data-l); display: table; margin: 0 0 3px; font: 700 11.5px/1.3 var(--font-cond); letter-spacing: .05em; text-transform: uppercase; color: #fff; background: var(--sc); border-radius: 999px; padding: 3px 10px; }
+.es-row.opt .es-pre::before { background: transparent; color: var(--sc); border: 1.5px dashed var(--sc); }
+.es-row.empty::after { content: "— optional, not attempted"; color: var(--muted); font-style: italic; font-size: .92em; }
+.es-st1 { color: var(--ink-2); }
+:root[data-theme="dark"] .es-st4, :root[data-theme="dark"] .es-row.opt .es-pre::before { --sc: #C9A8EC; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .es-st4, :root:not([data-theme="light"]) .es-row.opt .es-pre::before { --sc: #C9A8EC; } }
+:root[data-theme="dark"] .es-st4 .es-pre::before { color: #1A0F24; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .es-st4 .es-pre::before { color: #1A0F24; } }
+.essay mark.an.cont::before { display: none; }
+.model-lad { margin-top: 14px; }
+.lad-title { margin: 0 0 8px; font-size: 1.02em; color: var(--purple-ink); }
+.lad-narrow { display: none; }
+@media (max-width: 999px) { .lad-wide { display: none; } .lad-narrow { display: block; } }
+@media (min-width: 1000px) {
+  .rv-left { position: sticky; top: 12px; max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain; }
+}
+/* stage pills inside narrow ladder / rewrite columns: wrap instead of spilling into the next column */
+.lad-row, .rw-row { grid-template-columns: minmax(0, 170px) minmax(0, 1fr); }
+.lad-row .stg, .rw-row .stg { white-space: normal; max-width: 100%; justify-self: start; line-height: 1.3; }
+@media (max-width: 640px) { .lad-row, .rw-row { grid-template-columns: minmax(0, 1fr); } }
+/* score cards: never squeeze 4 across a narrow column (two-column review at 1000–1300px) */
+.scores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 1400px) { .scores { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.sc { min-width: 0; }
+.sc .lb { flex-wrap: wrap; justify-content: center; text-align: center; }
+/* phones: issue rows put the category under the text; long stage pills wrap */
+.iss-list li { grid-template-columns: auto minmax(0, 1fr) auto; }
+.iss-list li > span:nth-child(2) { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .iss-list li { grid-template-columns: auto minmax(0, 1fr); }
+  .iss-list .cat { grid-column: 2; white-space: normal; }
+}
+.box-h .stg, .base-row .stg { white-space: normal; max-width: 100%; line-height: 1.3; }
+.box-h > *, .base-row > * { min-width: 0; }
 
   /* ===== LH Master Hero — background art taken from the approved mock (logo, glow, ribbons fixed); only eyebrow / title / 3 chips change.
      Geometry measured on the mock at 1997×277 px: 1 mock px = 0.050075cqw. ===== */
@@ -1704,7 +1747,7 @@ function sentHtml(id) {
     <div class="note good" style="margin-top:8px"><span class="tag">Sent</span><p>${fmtDate(s.submitted.submittedAt)} · ${m ? m.words : '—'} words · required stage goals ${m ? m.correct + '/' + m.total : '—'}${b ? ` · Stage 4 bonus: ${b.att}/${b.n} attempted · ${b.met} met` : ''}. <span data-sendst="${esc(s.submitted.clientId)}"></span></p></div>
     <div class="row" style="margin:10px 0"><button class="btn primary" data-machine="${esc(s.submitted.clientId)}">Open the machine check</button><button class="btn" data-goto="s-mine">My results</button></div>
     <div class="airw" data-airw="${esc(s.submitted.clientId)}"><div class="airw-h"><b>✦ Natural rewrite</b><span class="muted small">Your own ideas, written the way a native academic writer would put them.</span></div><div class="airw-body"><button class="btn accent" data-airw-go="${esc(s.submitted.clientId)}">Show the natural rewrite</button></div></div>
-    <details class="model" style="margin-top:10px"><summary>Compare with the model ladder</summary><div style="margin-top:10px">${ladderHtml(p, s)}</div></details></div>`;
+    <div class="model-lad" style="margin-top:12px"><h4 class="lad-title">Compare with the model ladder</h4>${ladderHtml(p, s)}</div></div>`;
 }
 function renderWs() {
   if (!WORK) return; const ids = WORK.ids, u = me(), box = $('#work'), group = !!WORK.asg, open = openIds();
@@ -2005,16 +2048,39 @@ function orderIssues(st) {
   return L;
 }
 function relocate(text, a) { if (text.slice(a.s, a.e).slice(0, 60) === a.q) return a; const i = a.q ? text.indexOf(a.q) : -1; return i >= 0 ? Object.assign({}, a, { s: i, e: i + Math.max(a.q.length, a.e - a.s) }) : null; }
-function essayHtml(text, st, onlyP, selKey) {
+function essayHtml(text, st, onlyP, selKey) {      // the stored text stays exactly as submitted; stage rows are presentation only (prefixes are kept as zero-size text so selection offsets still match)
   const L = orderIssues(st).filter(x => x.kind === 'a').map(x => { const a = relocate(text, x.a); return a ? Object.assign({}, x, { a }) : null; }).filter(Boolean).sort((x, y) => x.a.s - y.a.s || y.a.e - x.a.e);
-  let out = '', pos = 0;
-  L.forEach(x => {
-    const a = x.a; if (a.s < pos || a.e > text.length) return;
-    const hide = onlyP && !a.p;
-    out += esc(text.slice(pos, a.s)) + `<mark class="an c-${a.c}${a.p ? '' : ' minor'}${hide ? ' hide' : ''}${selKey === 'a' + x.i ? ' sel' : ''}" data-n="${x.n}" data-key="a${x.i}" title="${esc(CAT[a.c] + ': ' + a.m + (a.f ? ' → ' + a.f : ''))}">${esc(text.slice(a.s, a.e))}</mark>`;
-    pos = a.e;
+  const marks = []; let pos = 0;
+  L.forEach(x => { const a = x.a; if (a.s < pos || a.e > text.length) return; marks.push(x); pos = a.e; });
+  const seg = (s0, e0) => {
+    let out = '', q = s0;
+    marks.forEach(x => {
+      const a = x.a, ms = Math.max(a.s, s0), me = Math.min(a.e, e0); if (ms >= me) return;
+      const hide = onlyP && !a.p;
+      out += esc(text.slice(q, ms)) + `<mark class="an c-${a.c}${a.p ? '' : ' minor'}${hide ? ' hide' : ''}${ms > a.s ? ' cont' : ''}${selKey === 'a' + x.i ? ' sel' : ''}" data-n="${x.n}" data-key="a${x.i}" title="${esc(CAT[a.c] + ': ' + a.m + (a.f ? ' → ' + a.f : ''))}">${esc(text.slice(ms, me))}</mark>`;
+      q = me;
+    });
+    return out + esc(text.slice(q, e0));
+  };
+  let html = '', open = false, ls = 0;
+  const lines = text.split('\n');
+  lines.forEach((line, li) => {
+    const le = ls + line.length, nl = li < lines.length - 1 ? '\n' : '';
+    const mb = line.match(/^(\d+)\.\s*Base:\s*/), ms = line.match(/^Stage (\d):\s*/);
+    if (mb) {
+      if (open) html += '</div>';
+      html += `<div class="es-grp" data-h="Sentence ${mb[1]}">`; open = true;
+      html += `<div class="es-row es-st1"><span class="es-pre" data-l="Stage 1 · Basic">${seg(ls, ls + mb[0].length)}</span>${seg(ls + mb[0].length, le)}${nl}</div>`;
+    } else if (ms) {
+      const S = STAGES.find(x => x.n === +ms[1]) || { n: ms[1], t: '' }, rest = line.slice(ms[0].length).trim();
+      html += `<div class="es-row es-st${S.n}${S.opt ? ' opt' : ''}${rest ? '' : ' empty'}"><span class="es-pre" data-l="Stage ${S.n} · ${esc(S.t)}${S.opt ? ' · optional' : ''}">${seg(ls, ls + ms[0].length)}</span>${seg(ls + ms[0].length, le)}${nl}</div>`;
+    } else if (!line.trim()) {
+      if (open) { html += nl + '</div>'; open = false; } else html += nl;
+    } else html += `<div class="es-row">${seg(ls, le)}${nl}</div>`;
+    ls = le + 1;
   });
-  return out + esc(text.slice(pos));
+  if (open) html += '</div>';
+  return html;
 }
 function issuesHtml(st, onlyP, selKey) {
   const L = orderIssues(st).filter(x => !onlyP || x.a.p);
@@ -2039,10 +2105,11 @@ function renderReview() {
       <div class="rv-h"><h4>Student's sentences</h4><span class="chip p">${esc(p.id)} · ${esc(p.topic)}</span></div>
       <div class="who"><span class="av">${esc(initials)}</span><span class="nm">${esc(R.who.name)}<small>${esc(R.who.sid || '')}</small></span><span><small>Set</small>${esc(p.id + ' · ' + p.topic)}</span><span><small>Submitted</small>${fmtDate(R.who.submittedAt)}</span></div>
       <details style="margin-top:10px"><summary class="small" style="cursor:pointer;color:var(--purple-ink);font-weight:700">Show the set</summary><div style="margin-top:8px">${setHtml(p)}</div></details>
-      <div class="essay" id="rv-essay">${essayHtml(text, st, R.onlyP, R.sel)}</div>
+      <div class="essay staged" id="rv-essay">${essayHtml(text, st, R.onlyP, R.sel)}</div>
       <div class="legend-c">${CATS.map(c => `<span class="${c}">${CAT[c]}</span>`).join('')}${edit ? '<span class="muted">· select words in the text to add an issue</span>' : ''}</div>
       <div class="rv-foot"><span>Words: <b>${wc(text)}</b></span><span class="row">Show <span class="seg-t"><button type="button" data-only="0" class="${R.onlyP ? '' : 'on'}">All issues (${nAll})</button><button type="button" data-only="1" class="${R.onlyP ? 'on' : ''}">Main only (${nP})</button></span></span></div>
       <div id="rv-issues">${issuesHtml(st, R.onlyP, R.sel)}</div>
+      ${R.mode !== 'teacher' ? `<div class="model-lad lad-narrow"><h4 class="lad-title">Compare with the model ladder</h4>${ladderHtml(p, null)}</div>` : ''}
       ${edit ? `<div class="iss-edit" id="iss-edit" hidden></div><div class="row" style="margin-top:8px"><button class="btn ghost small" id="add-general">+ Add a general issue</button></div>` : ''}
     </div>`;
   const right = `<div class="rv-card rv-right">${banner}
@@ -2055,7 +2122,7 @@ function renderReview() {
       ${edit ? `<div class="rv-sec"><div class="rv-h"><h4>Before you release</h4></div><div class="gate2" id="rv-gate">${GATE.map((g, i) => `<label><input type="checkbox" data-gate="${i}"${st.gate && st.gate[i] ? ' checked' : ''}> ${esc(g)}</label>`).join('')}</div></div>
       <div class="rv-actions"><button class="btn ghost" id="rv-doc">Google Doc</button><button class="btn" id="rv-save">Save draft</button><button class="btn primary lg" id="rv-release"></button></div>
       <div class="status" id="rv-status" hidden><span class="dot"></span><span></span></div>` : ''}
-      ${R.mode !== 'teacher' ? `<details class="model"><summary>Compare with the model ladder</summary><div style="margin-top:10px">${ladderHtml(p, null)}</div></details>` : ''}
+      ${R.mode !== 'teacher' ? `<div class="model-lad lad-wide"><h4 class="lad-title">Compare with the model ladder</h4>${ladderHtml(p, null)}</div>` : ''}
       ${R.mode === 'machine' ? `<div class="status" id="rv-send" data-cid="${esc(R.key)}" hidden><span class="dot"></span><span></span></div>` : ''}
     </div>`;
   $('#rv-body').innerHTML = `<div class="rv-tabs"><button type="button" data-rvtab="essay" class="${R.tab !== 'marks' ? 'on' : ''}">Sentences</button><button type="button" data-rvtab="marks" class="${R.tab === 'marks' ? 'on' : ''}">Marks &amp; comments</button></div><div class="rv" data-tab="${R.tab || 'essay'}">${left}${right}</div>`;
