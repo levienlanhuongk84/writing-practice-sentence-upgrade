@@ -791,6 +791,37 @@
   .sc .v .st button { min-width: 36px; min-height: 26px; font-size: 1em; border: 1px solid var(--line, #ddd); border-radius: 6px; }
 }
 
+/* ---- Stage 4 optional, combined assigned sets, natural rewrite (23/10) ---- */
+.stg.opt { background: #fff; color: #613087; border: 1.5px dashed #613087; }
+:root[data-theme="dark"] .stg.opt { background: transparent; color: #C9A8EC; border-color: #C9A8EC; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stg.opt { background: transparent; color: #C9A8EC; border-color: #C9A8EC; } }
+.box-row.box-opt { border-left-style: dashed; background: color-mix(in srgb, #613087 5%, transparent); border-radius: 0 10px 10px 0; padding-right: 8px; }
+.box-opt .box-task { color: var(--ink-2); font-style: italic; }
+.stepline li.opt { background: transparent; border: 1.5px dashed var(--purple); }
+.stepline li b { font-weight: 700; color: var(--orange-ink); }
+.set-sec { margin: 6px 0 18px; }
+.set-sec + .set-sec { border-top: 2px solid var(--line); padding-top: 14px; }
+.set-h { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 10px; color: var(--purple-ink); }
+.set-n { font: 700 .7em var(--font-cond); letter-spacing: .06em; text-transform: uppercase; background: var(--purple); color: #fff; border-radius: 999px; padding: 3px 10px; }
+.pchip-s { display: inline-block; border: 1px solid var(--purple); background: var(--purple); color: #fff; font: 700 12px var(--font-mono); padding: 6px 10px; border-radius: 999px; }
+.pchip-s.done { background: var(--good); border-color: var(--good); }
+.pchip-s.go { background: var(--orange); border-color: var(--orange); }
+.set-done { margin-bottom: 14px; }
+.airw { margin-top: 10px; border: 1.5px solid var(--purple-soft, #EFE4F7); border-left: 5px solid #613087; border-radius: 12px; padding: 10px 12px; background: var(--surface); }
+.airw-h { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 8px; }
+.airw-h b { color: var(--purple-ink); }
+.rw-s { margin-top: 8px; }
+.rw-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 4px 10px; padding: 6px 0; border-top: 1px dashed var(--line); align-items: start; }
+.rw-row > p { grid-column: 2; margin: 0; }
+.rw-row .lb { display: inline-block; min-width: 58px; font: 700 .7em var(--font-cond); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-right: 6px; }
+.rw-nat { color: var(--good); }
+.rw-why { font-size: .9em; color: var(--ink-2); }
+.rw-prompt { width: 100%; margin-top: 6px; font: .9em/1.5 var(--font-mono); }
+@media (max-width: 640px) {
+  .rw-row { grid-template-columns: minmax(0, 1fr); }
+  .rw-row > p { grid-column: 1; }
+}
+
   /* ===== LH Master Hero — background art taken from the approved mock (logo, glow, ribbons fixed); only eyebrow / title / 3 chips change.
      Geometry measured on the mock at 1997×277 px: 1 mock px = 0.050075cqw. ===== */
   .lh-hero { --u: .050075cqw; container-type: inline-size; position: relative; width: 100%; aspect-ratio: 1997 / 277; overflow: hidden; color: #F7EDFC;
@@ -884,7 +915,7 @@
   }
   // class codes the teacher assigns on this page (Admin → Class assignments) appear in the list automatically, first
   // only = true when the teacher blocks every other code: then the list shows just the assigned codes (the others could not start anyway)
-  window.lhAddClasses = function (codes, only) { assigned = (codes || []).map(function (c) { return String(c || '').trim(); }).filter(Boolean); onlyAssigned = !!only; fill(); };
+  window.lhAddClasses = function (codes, only) { assigned = (codes || []).map(function (c) { return String(c || '').trim().replace(/\s+/g, ' ').replace(/\s*([-_./])\s*/g, '$1'); }).filter(Boolean); onlyAssigned = !!only; fill(); };
   try { var cached = JSON.parse(localStorage.getItem('lh-classes') || 'null'); if (cached && cached.length) fill(cached); } catch (e) {}
   fetch(URL).then(function (r) { return r.json(); }).then(function (j) {
     if (j && j.ok && j.classes && j.classes.length) { try { localStorage.setItem('lh-classes', JSON.stringify(j.classes)); } catch (e) {} fill(j.classes); }
@@ -893,11 +924,11 @@
 </script>
 </div>
     </div>
-    <h3>Choose a set</h3>
+    <h3 id="pick-h">Choose a set</h3>
     <div class="skills" id="type-pick"></div>
     <p class="sub" id="pick-summary" style="margin-top:10px"></p>
     <h3>Each set</h3>
-    <ol class="stepline"><li>2 base sentences</li><li>Stage 2 · Detail</li><li>Stage 3 · Clause</li><li>Stage 4 · Academic</li><li>Submit · about 15′</li></ol>
+    <ol class="stepline"><li>2 base sentences</li><li>Stage 2 · Detail <b>· required</b></li><li>Stage 3 · Clause <b>· required</b></li><li class="opt">Stage 4 · Academic · optional</li><li>Submit</li></ol>
     <div class="status err" id="closed-note" hidden><span class="dot"></span><span></span></div>
     <div class="status err" id="start-err" hidden><span class="dot"></span><span></span></div>
     <p style="margin:18px 0 0"><button class="btn primary lg" id="btn-start">Start</button></p>
@@ -908,70 +939,136 @@
 <!-- ================= 1 · THEORY ================= -->
 <section class="sheet" id="s-theory" hidden>
   <div class="sheet-head">
-    <div><span class="eyebrow">Theory recap</span><h2>Upgrade a sentence in 4 stages</h2><p class="lead">Basic → Detail → Clause → Academic. <a href="https://levienlanhuongk84.github.io/academic-writing-step-by-step/#lc-cap-4" target="_blank" rel="noopener">Full lesson ↗</a></p></div>
+    <div><span class="eyebrow">Theory recap</span><h2>Upgrade a sentence in 4 stages</h2><p class="lead">Basic → Detail → Clause <b>(required)</b> → Academic <b>(optional)</b>. <a href="https://levienlanhuongk84.github.io/academic-writing-step-by-step/#lc-cap-4" target="_blank" rel="noopener">Full lesson ↗</a></p></div>
   </div>
   <section class="block" id="t-marking">
     <h3>How your sentences are marked</h3>
     <div class="grid-4">
-      <div class="card accent"><span class="k">Task fulfilment</span><h4>/10</h4><ul><li>Each stage does its job</li><li>The base idea is kept</li></ul></div>
+      <div class="card accent"><span class="k">Task fulfilment</span><h4>/10</h4><ul><li>Stages 2 and 3 do their job (required)</li><li>The base idea is kept</li><li>Stage 4 is optional: no penalty if it is missing</li></ul></div>
       <div class="card purple"><span class="k">Organization</span><h4>/10</h4><ul><li>Clear, logical clause links</li><li>Reason / result makes sense</li></ul></div>
-      <div class="card purple"><span class="k">Vocabulary</span><h4>/10</h4><ul><li>Precise, academic words</li><li>Collocations, no vague words</li></ul></div>
+      <div class="card purple"><span class="k">Vocabulary</span><h4>/10</h4><ul><li>Precise, academic words</li><li>Collocations, no vague words</li><li>A good Stage 4 earns extra credit here</li></ul></div>
       <div class="card accent"><span class="k">Grammar</span><h4>/10</h4><ul><li>Accuracy</li><li>Correct clause structure</li></ul></div>
     </div>
   </section>
-  <section class="block" id="t-stages">
+  <style>
+    /* theory infographic: stage colours and function colours match academic-writing-step-by-step (Level 4 · Upgrade a sentence) */
+    .tg { --st1: #8B7C99; --st2: #2A62C4; --st3: #DD5A28; --st4: #613087; }
+    .tg-card { background: var(--surface, #fff); border: 1px solid var(--line, #E6DDF0); border-radius: 12px; padding: 12px 14px; }
+    .tg-key { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+    .tg-key b { font: 700 .72em var(--font-cond, inherit); letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #8B7C99); margin-right: 4px; }
+    .tg-pill { display: inline-block; font: 700 .74em var(--font-cond, inherit); letter-spacing: .06em; text-transform: uppercase; color: #fff; border-radius: 999px; padding: 3px 10px; }
+    .tg-p1 { background: var(--st1); } .tg-p2 { background: var(--st2); } .tg-p3 { background: var(--st3); } .tg-p4 { background: var(--st4); }
+    .tg-opt { background: #fff; color: var(--st4); border: 1.5px dashed var(--st4); }
+    .tg-rule { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px; margin-top: 10px; }
+    .tg-rule > div { border-radius: 12px; padding: 10px 14px; font-weight: 500; }
+    .tg-req { background: #E3ECFB; border: 2px solid var(--st2); }
+    .tg-enc { background: #F2EAF8; border: 2px dashed var(--st4); }
+    .tg-rule strong { display: block; font-size: 1.05em; margin-bottom: 2px; }
+    .tg-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; counter-reset: st; }
+    .tg-step { position: relative; background: var(--surface, #fff); border: 1px solid var(--line, #E6DDF0); border-top: 5px solid var(--c); border-radius: 12px; padding: 10px 12px; }
+    .tg-step .tg-pill { background: var(--c); }
+    .tg-step.opt { border-style: dashed; border-top-style: solid; }
+    .tg-step h4 { margin: 6px 0 4px; font-size: 1em; }
+    .tg-step p { margin: 0; font-size: .92em; color: var(--ink-2, #5A4C68); }
+    .tg-step .tg-ex { margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--line-strong, #CDB9E1); font-style: italic; font-size: .92em; color: var(--ink, #241530); }
+    .tg-step:not(:last-child)::after { content: "→"; position: absolute; right: -9px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--muted, #8B7C99); background: var(--bg, #FBF9FC); border-radius: 50%; width: 18px; text-align: center; }
+    @media (max-width: 760px) { .tg-flow { grid-template-columns: minmax(0, 1fr); } .tg-step:not(:last-child)::after { content: "↓"; right: auto; left: 50%; top: auto; bottom: -15px; transform: translateX(-50%); } }
+    .tg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 10px; }
+    .tg-box { background: var(--surface, #fff); border: 1px solid var(--line, #E6DDF0); border-left: 5px solid var(--c); border-radius: 10px; padding: 9px 12px; }
+    .tg-box .q { font-weight: 700; color: var(--c); }
+    .tg-box .ex { display: block; margin-top: 3px; font-style: italic; font-size: .92em; }
+    .tg-arrow { color: var(--muted, #8B7C99); font-style: normal; font-weight: 700; padding: 0 3px; }
+    .tg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0; }
+    .tg-chip { font: 600 .9em var(--font, inherit); border-radius: 8px; padding: 2px 9px; border: 1.5px solid var(--c); background: #fff; color: var(--ink, #241530); }
+    .tg-warn { margin-top: 10px; border-radius: 10px; padding: 8px 12px; background: #FCEBDD; border-left: 4px solid #DD5A28; font-size: .94em; }
+    .tg-warn b { color: #B8471E; }
+    .tg-lad { display: grid; gap: 8px; }
+    .tg-lad > div { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 10px; align-items: start; background: var(--surface, #fff); border: 1px solid var(--line, #E6DDF0); border-left: 5px solid var(--c); border-radius: 10px; padding: 8px 12px; }
+    .tg-lad .s { line-height: 2; }
+    .tg-lad .add { grid-column: 2; font-size: .88em; color: var(--ink-2, #5A4C68); }
+    .tg-lad .add mark { background: #FFF4D6; border-radius: 4px; padding: 0 3px; color: inherit; }
+    @media (max-width: 560px) { .tg-lad > div { grid-template-columns: minmax(0, 1fr); } .tg-lad .add { grid-column: 1; } }
+    /* function colours (same as the theory page) */
+    .tg .g { border-radius: 4px; padding: 0 2px; font-style: normal; }
+    .tg .g::after { white-space: nowrap; font: 700 .58em var(--font, inherit); vertical-align: super; margin-left: 1px; }
+    .tg .g-s { background: #DCE8FB; box-shadow: inset 0 -2px 0 #2A62C4; } .tg .g-s::after { content: "S"; color: #2A62C4; }
+    .tg .g-v { background: #FBE0DE; box-shadow: inset 0 -2px 0 #B23B3B; } .tg .g-v::after { content: "V"; color: #B23B3B; }
+    .tg .g-o { background: #DCF0E3; box-shadow: inset 0 -2px 0 #2E7D4F; } .tg .g-o::after { content: "O/C"; color: #2E7D4F; }
+    .tg .g-c { background: #EFE4F7; color: #4A2467; font-weight: 700; } .tg .g-c::after { content: "conj"; color: #613087; }
+    .tg .g-ph { background: #DDF2EF; box-shadow: inset 0 -2px 0 #0E7C74; } .tg .g-ph::after { content: "phrase"; color: #0E7C74; }
+    .tg .g-dc { border: 1.5px dashed #DD5A28; padding: 1px 3px; } .tg .g-dc::after { content: none; }
+    .tg .g-rc { border: 1.5px dotted #A6740A; padding: 1px 3px; background: #FFF6DC; } .tg .g-rc::after { content: none; }
+    :root[data-theme="dark"] .tg .g, :root[data-theme="dark"] .tg-chip, :root[data-theme="dark"] .tg-req, :root[data-theme="dark"] .tg-enc, :root[data-theme="dark"] .tg-warn, :root[data-theme="dark"] .tg-lad mark { color: #17101F; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tg .g, :root:not([data-theme="light"]) .tg-chip, :root:not([data-theme="light"]) .tg-req, :root:not([data-theme="light"]) .tg-enc, :root:not([data-theme="light"]) .tg-warn, :root:not([data-theme="light"]) .tg-lad mark { color: #17101F; } }
+    :root[data-theme="dark"] .tg-box .q, :root[data-theme="dark"] .tg-step h4 { color: #F1E9F8; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tg-box .q, :root:not([data-theme="light"]) .tg-step h4 { color: #F1E9F8; } }
+  </style>
+
+  <section class="block tg" id="t-stages">
     <h3>The 4 stages at a glance</h3>
-    <div class="tablewrap"><table class="stack">
-      <thead><tr><th>Stage</th><th>What you do</th><th>Example</th></tr></thead>
-      <tbody>
-        <tr><td data-l="" class="fn">1 · Basic</td><td data-l="What you do">A simple sentence: subject + verb + object</td><td data-l="Example"><span class="en">Cars cause pollution.</span></td></tr>
-        <tr><td data-l="" class="fn">2 · Detail</td><td data-l="What you do">Add adjectives and phrases: <strong>who, what, where, when, how much</strong></td><td data-l="Example"><span class="en">Private cars cause serious air pollution in big cities.</span></td></tr>
-        <tr><td data-l="" class="fn">3 · Clause</td><td data-l="What you do">Keep Stage 2 and add a <strong>reason or result clause</strong></td><td data-l="Example"><span class="en">Private cars cause serious air pollution in big cities, which harms the health of millions of residents.</span></td></tr>
-        <tr><td data-l="" class="fn">4 · Academic</td><td data-l="What you do"><strong>Nominalise</strong> the subject, <strong>hedge</strong> the claim, use <strong>collocations</strong></td><td data-l="Example"><span class="en">The rapid growth in private car ownership is likely to be a major cause of air pollution in large cities, which poses a serious threat to public health.</span></td></tr>
-      </tbody>
-    </table></div>
+    <div class="tg-flow">
+      <div class="tg-step" style="--c: var(--st1)"><span class="tg-pill">Stage 1 · Basic</span><h4>The base sentence</h4><p>Subject + verb + object. Given in every task.</p><div class="tg-ex">Cars cause pollution.</div></div>
+      <div class="tg-step" style="--c: var(--st2)"><span class="tg-pill">Stage 2 · Detail</span><h4>Add details</h4><p>Who? What? Where? When? How much? No new clause yet.</p><div class="tg-ex">Private cars cause serious air pollution in big cities.</div></div>
+      <div class="tg-step" style="--c: var(--st3)"><span class="tg-pill">Stage 3 · Clause</span><h4>Add a reason or result</h4><p>Keep Stage 2 and add one clause.</p><div class="tg-ex">…, which harms the health of millions of residents.</div></div>
+      <div class="tg-step opt" style="--c: var(--st4)"><span class="tg-pill">Stage 4 · Academic</span><h4>Make it academic <small>(optional)</small></h4><p>Noun-phrase subject + hedging + collocations.</p><div class="tg-ex">The rapid growth in car ownership is likely to…</div></div>
+    </div>
+    <div class="tg-rule">
+      <div class="tg-req"><strong>Stages 2 and 3: required</strong>Write both for every sentence in every set you are given.</div>
+      <div class="tg-enc"><strong>Stage 4: encouraged</strong>Try it for extra credit. A missing Stage 4 is never marked down.</div>
+    </div>
   </section>
 
-  <section class="block" id="t-s2">
-    <h3>Stage 2 · Add detail</h3>
-    <ul>
-      <li><strong>Who exactly?</strong> <span class="en">children → many primary schoolchildren</span></li>
-      <li><strong>What exactly?</strong> <span class="en">phones → smartphones</span> · <span class="en">helps → creates jobs</span></li>
-      <li><strong>Where / when?</strong> <span class="en">in rural areas · during rush hours · over the past five years</span></li>
-      <li><strong>How much / how often?</strong> <span class="en">a lot → for several hours a day</span></li>
-    </ul>
-    <div class="note warn"><span class="tag">Replace vague words</span><p><span class="en">good, bad, a lot, thing, big, get</span> → a precise noun, verb or fact. No new clause yet.</p></div>
+  <section class="block tg" id="t-key">
+    <h3>Colour key</h3>
+    <div class="tg-card tg-key">
+      <b>Stages</b><span class="tg-pill tg-p1">1 Basic</span><span class="tg-pill tg-p2">2 Detail</span><span class="tg-pill tg-p3">3 Clause</span><span class="tg-pill tg-p4">4 Academic</span>
+    </div>
+    <div class="tg-card tg-key" style="margin-top:8px">
+      <b>Sentence parts</b><span class="g g-s">subject</span><span class="g g-v">verb</span><span class="g g-o">object / complement</span><span class="g g-c">connector</span><span class="g g-ph">phrase</span><span class="g g-dc">dependent clause</span><span class="g g-rc">relative clause</span>
+    </div>
   </section>
 
-  <section class="block" id="t-s3">
-    <h3>Stage 3 · Add a reason or result clause</h3>
-    <ul>
-      <li><strong>Reason:</strong> <span class="en">… because + S + V</span> · <span class="en">… as + S + V</span></li>
-      <li><strong>Result:</strong> <span class="en">…, so + S + V</span> · <span class="en">…, which + V</span> (refers to the whole idea before it)</li>
-      <li><strong>Contrast:</strong> <span class="en">Although + S + V, …</span></li>
-    </ul>
-    <div class="note info"><span class="tag">Punctuation</span><p>Comma before <span class="en">so</span> and <span class="en">, which</span>; no comma before <span class="en">because</span> in the middle of a sentence.</p></div>
+  <section class="block tg" id="t-s2">
+    <h3><span class="tg-pill tg-p2">Stage 2</span> Add detail: answer 5 questions</h3>
+    <div class="tg-grid">
+      <div class="tg-box" style="--c: var(--st2)"><span class="q">Who exactly?</span><span class="ex">children <span class="tg-arrow">→</span> many primary schoolchildren</span></div>
+      <div class="tg-box" style="--c: var(--st2)"><span class="q">What exactly?</span><span class="ex">phones <span class="tg-arrow">→</span> smartphones · helps <span class="tg-arrow">→</span> creates jobs</span></div>
+      <div class="tg-box" style="--c: var(--st2)"><span class="q">Where?</span><span class="ex">in rural areas · in big cities</span></div>
+      <div class="tg-box" style="--c: var(--st2)"><span class="q">When?</span><span class="ex">during rush hours · over the past five years</span></div>
+      <div class="tg-box" style="--c: var(--st2)"><span class="q">How much / how often?</span><span class="ex">a lot <span class="tg-arrow">→</span> for several hours a day</span></div>
+    </div>
+    <div class="tg-warn"><b>Replace vague words:</b> good · bad · a lot · thing · big · get <span class="tg-arrow">→</span> a precise noun, verb or fact.</div>
   </section>
 
-  <section class="block" id="t-s4">
-    <h3>Stage 4 · Make it academic</h3>
-    <ul>
-      <li><strong>Nominalise the subject:</strong> <span class="en">people eat fast food → regular consumption of fast food</span> · <span class="en">cities grow → the expansion of cities</span></li>
-      <li><strong>Hedge the claim:</strong> <span class="en">is likely to · may · could · tends to · appears to</span></li>
-      <li><strong>Use collocations:</strong> <span class="en">pose a serious threat to · contribute to · reduce the risk of · public health</span></li>
-    </ul>
-    <div class="note warn"><span class="tag">Avoid</span><p>Over-claiming (<span class="en">always, never, everyone, proves</span>), contractions and spoken words (<span class="en">a lot of, stuff, kids</span>).</p></div>
+  <section class="block tg" id="t-s3">
+    <h3><span class="tg-pill tg-p3">Stage 3</span> Add one reason or result clause</h3>
+    <div class="tg-grid">
+      <div class="tg-box" style="--c: var(--st3)"><span class="q">Reason</span><div class="tg-chips" style="--c: var(--st3)"><span class="tg-chip">because + S + V</span><span class="tg-chip">as + S + V</span></div></div>
+      <div class="tg-box" style="--c: var(--st3)"><span class="q">Result</span><div class="tg-chips" style="--c: var(--st3)"><span class="tg-chip">, so + S + V</span><span class="tg-chip">, which + V</span><span class="tg-chip">. As a result, …</span></div></div>
+      <div class="tg-box" style="--c: var(--st3)"><span class="q">Contrast</span><div class="tg-chips" style="--c: var(--st3)"><span class="tg-chip">Although + S + V, …</span></div></div>
+    </div>
+    <div class="tg-warn"><b>Punctuation:</b> a comma <b>before</b> <i>so</i> and <i>, which</i>; no comma before <i>because</i> in the middle of a sentence.</div>
   </section>
 
-  <section class="block" id="t-ladder">
+  <section class="block tg" id="t-s4">
+    <h3><span class="tg-pill tg-p4">Stage 4</span> Make it academic <span class="tg-pill tg-opt">optional</span></h3>
+    <div class="tg-grid">
+      <div class="tg-box" style="--c: var(--st4)"><span class="q">1 · Nominalise the subject</span><span class="ex">people eat fast food <span class="tg-arrow">→</span> regular consumption of fast food</span></div>
+      <div class="tg-box" style="--c: var(--st4)"><span class="q">2 · Hedge the claim</span><div class="tg-chips" style="--c: var(--st4)"><span class="tg-chip">is likely to</span><span class="tg-chip">may</span><span class="tg-chip">could</span><span class="tg-chip">tends to</span><span class="tg-chip">appears to</span></div></div>
+      <div class="tg-box" style="--c: var(--st4)"><span class="q">3 · Use collocations</span><div class="tg-chips" style="--c: var(--st4)"><span class="tg-chip">pose a threat to</span><span class="tg-chip">contribute to</span><span class="tg-chip">reduce the risk of</span></div></div>
+    </div>
+    <div class="tg-warn"><b>Avoid:</b> always · never · everyone · proves · contractions · a lot of · stuff · kids</div>
+  </section>
+
+  <section class="block tg" id="t-ladder">
     <h3>One sentence, four stages</h3>
-    <ul class="dash">
-      <li><strong>1</strong> <span class="en">Fast food is bad.</span></li>
-      <li><strong>2</strong> <span class="en">Regular fast-food meals are high in salt, sugar and fat.</span> <em>(how often + what exactly)</em></li>
-      <li><strong>3</strong> <span class="en">Regular fast-food meals are high in salt, sugar and fat, so they increase the risk of obesity and heart disease.</span> <em>(+ result clause)</em></li>
-      <li><strong>4</strong> <span class="en">Regular consumption of fast food is likely to increase the risk of obesity and heart disease, particularly among young adults.</span> <em>(nominalised subject + hedge)</em></li>
-    </ul>
-    <p class="small"><a href="https://levienlanhuongk84.github.io/academic-writing-step-by-step/" target="_blank" rel="noopener">Full lesson: Sentences and Paragraphs Step by Step ↗</a></p>
+    <div class="tg-lad">
+      <div style="--c: var(--st1)"><span class="tg-pill tg-p1">Stage 1 · Basic</span><span class="s"><span class="g g-s">Fast food</span> <span class="g g-v">is</span> <span class="g g-o">bad</span>.</span></div>
+      <div style="--c: var(--st2)"><span class="tg-pill tg-p2">Stage 2 · Detail</span><span class="s"><span class="g g-s">Regular fast-food meals</span> <span class="g g-v">are</span> <span class="g g-o">high in salt, sugar and fat</span>.</span><span class="add">+ <mark>Regular … meals</mark> how often, what exactly · + <mark>high in salt, sugar and fat</mark> replaces <i>bad</i></span></div>
+      <div style="--c: var(--st3)"><span class="tg-pill tg-p3">Stage 3 · Clause</span><span class="s"><span class="g g-s">Regular fast-food meals</span> <span class="g g-v">are</span> <span class="g g-o">high in salt, sugar and fat</span>, <span class="g g-c">so</span> <span class="g g-s">they</span> <span class="g g-v">increase</span> <span class="g g-o">the risk of obesity and heart disease</span>.</span><span class="add">+ <mark>, so they increase the risk of …</mark> a result clause</span></div>
+      <div style="--c: var(--st4)"><span class="tg-pill tg-p4">Stage 4 · Academic</span><span class="s"><span class="g g-s">Regular consumption of fast food</span> <span class="g g-v">is likely to increase</span> <span class="g g-o">the risk of obesity and heart disease</span>, <span class="g g-ph">particularly among young adults</span>.</span><span class="add">+ <mark>Regular consumption of</mark> nominalised subject · + <mark>is likely to</mark> hedge · + <mark>particularly among young adults</mark> narrows the claim</span></div>
+    </div>
+    <p class="small" style="margin-top:10px"><a href="https://levienlanhuongk84.github.io/academic-writing-step-by-step/#lc-cap-4" target="_blank" rel="noopener">Full lesson: Level 4 · Upgrade a sentence in 4 stages ↗</a></p>
   </section>
 
 </section>
@@ -1002,7 +1099,7 @@
     <div class="row"><select class="sel" id="rp-class" aria-label="Class"><option value="">All classes</option></select><button class="btn" id="btn-rp-refresh">Refresh</button></div>
   </div>
   <div class="status" id="rp-status"><span class="dot"></span><span>Loading…</span></div>
-  <section class="block" id="r-overview"><h3>Overview</h3><div class="kpis" id="rp-kpis"></div><div class="tablewrap"><table class="tbl" id="rp-types"><thead><tr><th>Topic group</th><th class="n">Sets</th><th class="n">Stage goals met</th><th class="n">All 6 goals</th><th class="n">Avg words</th></tr></thead><tbody></tbody></table></div></section>
+  <section class="block" id="r-overview"><h3>Overview</h3><div class="kpis" id="rp-kpis"></div><div class="tablewrap"><table class="tbl" id="rp-types"><thead><tr><th>Topic group</th><th class="n">Sets</th><th class="n">Stage goals met</th><th class="n">All required goals</th><th class="n">Avg words</th></tr></thead><tbody></tbody></table></div></section>
   <section class="block" id="r-steps"><h3>Which stage is missed most</h3><div class="bars" id="rp-bars"></div></section>
   <section class="block" id="r-rank"><h3>Ranking</h3><div id="rank-box"></div></section>
 </section>
@@ -1046,7 +1143,7 @@
       </div>
       <div class="card" id="admin-assign" style="margin-top:16px">
         <h4 style="font-size:1.15em;color:var(--purple-ink)">Class assignments</h4>
-        <p class="vn" style="margin:6px 0 12px">A student whose <b>Class / ID</b> starts with a class code below (e.g. code CH35 → CH35-07) can open only the sets ticked for that class. The clock starts when the set opens and the work is submitted automatically when the minutes run out. With no class listed, every student chooses freely.</p>
+        <p class="vn" style="margin:6px 0 12px">A student whose <b>Class / ID</b> starts with a class code below (e.g. code CH35 → CH35-07) must write <b>all</b> the sets ticked for that class, in one sitting. The clock (the writing time below, for all the sets together) starts when they open and everything is submitted automatically when the minutes run out. With no class listed, every student chooses freely.</p>
         <div class="field" style="max-width:460px"><label for="as-others">Students whose Class / ID matches no code</label><select id="as-others"><option value="closed">Blocked — they cannot start</option><option value="full">Full choice — they pick any set</option></select></div>
         <div id="as-rows" style="margin-top:12px"></div>
         <div class="row" style="justify-content:space-between;margin-top:12px"><button class="btn ghost" id="as-add">+ Add a class</button><button class="btn primary" id="as-save">Save assignments</button></div>
@@ -1384,12 +1481,16 @@ DATA.forEach(p => { p.title = p.topic; PROMPTS[p.id] = p; ORDER.push(p.id); });
 const STAGES = [
   { k: 's2', n: 2, t: 'Detail', task: 'Add who / what / where / when / how much. Replace vague words. No new clause yet.' },
   { k: 's3', n: 3, t: 'Clause', task: 'Keep your Stage 2 sentence and add a reason or result clause.' },
-  { k: 's4', n: 4, t: 'Academic', task: 'Turn the action into a noun-phrase subject, hedge the claim and use academic collocations.' }
+  { k: 's4', n: 4, t: 'Academic', opt: true, label: 'Academic · optional — try it!', task: 'Optional – try it: turn the action into a noun-phrase subject, hedge the claim and use academic collocations.' }
 ];
+const REQ = STAGES.filter(S => !S.opt);                 // Stages 2–3 are required; Stage 4 is encouraged (no penalty when missing)
 const boxKeys = p => p.sentences.flatMap((x, i) => STAGES.map(S => i + S.k));
+const reqKeys = p => p.sentences.flatMap((x, i) => REQ.map(S => i + S.k));
+const isOptKey = k => k.endsWith('s4');
+const reqFilled = (p, s) => reqKeys(p).filter(k => String((s.box || {})[k] || '').trim()).length;
 const BOX_LABEL = k => 'Sentence ' + (+k[0] + 1) + ' · Stage ' + k.slice(2);
 const LESSONS = {
-  't-stages': ['The 4 stages', 'Basic → Detail → Clause → Academic'],
+  't-stages': ['The 4 stages', 'Basic → Detail → Clause (required) → Academic (optional)'],
   't-s2': ['Stage 2 · Add detail', 'Who, what, where, when, how much – replace vague words'],
   't-s3': ['Stage 3 · Add a clause', 'A reason or result: because, so, , which, as a result'],
   't-s4': ['Stage 4 · Make it academic', 'Nominalised subject, hedging, collocations'],
@@ -1494,7 +1595,6 @@ const freshState = () => ({ box: {}, tSec: 0, tRun: 0, submitted: null });
 const PS = {};
 function st(id) { if (!PS[id]) PS[id] = Object.assign(freshState(), store.get('p:' + id, {})); PS[id].box = PS[id].box || {}; return PS[id]; }
 function saveSt(id) { store.set('p:' + id, st(id)); }
-let CURID = store.get('curid', '');      // the set open in the workspace
 const mineList = () => store.get('mine', []);
 const filled = s => Object.values(s.box || {}).filter(v => String(v || '').trim()).length;
 
@@ -1503,8 +1603,8 @@ function promptStatus(id) {
   if (mine.some(m => FB[m.clientId])) return ['Feedback ready', 'done'];
   if (s.submitted) return ['Submitted', 'done'];
   if (mine.length && !filled(s)) return ['Submitted ×' + mine.length, 'done'];
-  const n = filled(s);
-  return n ? ['Writing… ' + n + '/' + boxKeys(PROMPTS[id]).length, 'go'] : ['Not started', ''];
+  const n = reqFilled(PROMPTS[id], s);
+  return filled(s) ? ['Writing… ' + n + '/' + reqKeys(PROMPTS[id]).length, 'go'] : ['Not started', ''];
 }
 /* ---------- class assignments (admin): which sets a class may open, minutes for the writing ---------- */
 const normCode = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -1520,23 +1620,41 @@ function assignmentFor(sid) {       // same matching as the mock tests: the long
 }
 const curAsg = () => assignmentFor($('#f-sid').value);
 const allowedIds = asg => asg && asg !== 'closed' ? Object.keys(asg.parts || {}).filter(id => PROMPTS[id]) : ORDER.slice();
-let SEL = store.get('sel', '');       // set chosen on the start card
+let SEL = store.get('sel', '');       // set chosen on the start card (free choice only)
 let VIEW = store.get('view', 'start'); // 'start' | 'work'
+/* WORK = what the workspace shows: { ids: [...], asg: { code, min } | null, wStart }.
+   An assigned class writes ALL its sets in one sitting with one clock (the class writing time); free choice = one set. */
+let WORK = store.get('work', null);
+const saveWork = () => store.set('work', WORK);
+const asgIds = asg => ORDER.filter(id => asg && asg.parts && asg.parts[id] && PROMPTS[id]);
+const asgMin = asg => Math.max(...asgIds(asg).map(id => +asg.parts[id] || 0), 5);   // the admin card gives every ticked set the same minutes = the time for the whole sitting
 function renderPicker() {
   if (!SET_READY) { $('#type-pick').innerHTML = '<p class="muted" style="grid-column:1/-1">Loading the class settings…</p>'; $('#pick-summary').textContent = ''; $('#btn-start').disabled = true; return; }
   const asg = curAsg(), allow = allowedIds(asg);
   if (asg === 'closed') {
+    $('#pick-h').textContent = 'Choose a set';
     $('#type-pick').innerHTML = `<div class="note bad" style="grid-column:1/-1"><span class="tag">Not assigned</span><p>${$('#f-sid').value.trim() ? 'This practice is not assigned to your Class / ID. Check the code with your teacher.' : 'Choose your class to see the sets assigned to it.'}</p></div>`;
     $('#pick-summary').textContent = ''; $('#btn-start').textContent = 'Start'; $('#btn-start').disabled = true; return;
   }
   $('#btn-start').disabled = !SET.open;
+  if (asg) {          // assigned: every ticked set is compulsory, shown as a list (no choice)
+    const ids = asgIds(asg), done = ids.filter(id => st(id).submitted).length;
+    $('#pick-h').textContent = 'Your sets (all required)';
+    $('#type-pick').innerHTML = TYPES.map(T => { const L = ids.filter(id => PROMPTS[id].type === T.id); if (!L.length) return '';
+      return `<div class="skill on"><div class="head"><span><b>${T.id} · ${esc(T.short)}</b><small>${L.map(id => esc(PROMPTS[id].topic)).filter((x, i, a) => a.indexOf(x) === i).join(' · ')}</small></span></div>
+        <div class="pchips">${L.map(id => { const [st2, c] = promptStatus(id); return `<span class="pchip-s on ${c}" title="${esc(PROMPTS[id].topic + ' · ' + st2)}">${id}${c === 'done' ? ' ✓' : c === 'go' ? ' …' : ''}</span>`; }).join('')}</div></div>`; }).join('');
+    $('#pick-summary').innerHTML = `<b>Class ${esc(asg.code)}</b> · ${ids.length} set${ids.length === 1 ? '' : 's'} to write (${ids.join(' → ')}) · ${asgMin(asg)} min for all of them · the work is submitted automatically when the time is up.` + (done ? `<br>${done} of ${ids.length} already submitted on this device.` : '');
+    $('#btn-start').textContent = done === ids.length ? 'Open my sets' : (WORK && WORK.asg && normCode(WORK.asg.code) === normCode(asg.code) && WORK.wStart ? 'Continue' : 'Start all ' + ids.length + ' set' + (ids.length === 1 ? '' : 's'));
+    return;
+  }
+  $('#pick-h').textContent = 'Choose a set';
   if (SEL && !allow.includes(SEL)) { SEL = ''; store.set('sel', SEL); }
   $('#type-pick').innerHTML = TYPES.map(T => { const ids = DATA.filter(p => p.type === T.id).map(p => p.id).filter(id => allow.includes(id)), sub = ids.filter(id => mineList().some(m => m.pid === id)).length;
     if (!ids.length) return '';
     return `<div class="skill${SEL && PROMPTS[SEL].type === T.id ? ' on' : ''}"><div class="head"><span><b>${T.id} · ${esc(T.short)}</b><small>${ids.map(id => esc(PROMPTS[id].topic)).filter((x, i, a) => a.indexOf(x) === i).join(' · ')} · ${sub}/${ids.length} submitted</small></span></div>
       <div class="pchips">${ids.map(id => { const [st2, c] = promptStatus(id); return `<button type="button" class="${SEL === id ? 'on' : ''} ${c}" data-pick="${id}" title="${esc(PROMPTS[id].topic + ' · ' + st2)}">${id}${c === 'done' ? ' ✓' : c === 'go' ? ' …' : ''}</button>`; }).join('')}</div></div>`; }).join('');
-  const p = SEL && PROMPTS[SEL], mins = asg && asg.parts && p ? asg.parts[p.id] : 0;
-  $('#pick-summary').innerHTML = (asg ? `<b>Class ${esc(asg.code)}</b> · ${allow.length} assigned set${allow.length === 1 ? '' : 's'} · the writing closes and submits itself when the time is up.<br>` : '') + (p ? `Selected: <b>${esc(p.id)} · ${esc(p.topic)}</b> · ${p.sentences.length} sentences${mins ? ' · ' + mins + ' min' : ''} — ${esc(promptStatus(p.id)[0])}` : 'Choose one set.');
+  const p = SEL && PROMPTS[SEL];
+  $('#pick-summary').innerHTML = p ? `Selected: <b>${esc(p.id)} · ${esc(p.topic)}</b> · ${p.sentences.length} sentences — ${esc(promptStatus(p.id)[0])}` : 'Choose one set.';
   $('#btn-start').textContent = p ? (promptStatus(p.id)[1] ? 'Continue ' + p.id : 'Start ' + p.id) : 'Start';
 }
 document.addEventListener('click', e => {
@@ -1546,20 +1664,25 @@ document.addEventListener('click', e => {
 function startErr(msg) { const el = $('#start-err'); el.hidden = !msg; el.lastElementChild.textContent = msg || ''; }
 let pickDeb = null;
 ['f-name', 'f-sid'].forEach(f => $('#' + f).addEventListener('input', () => { store.set('me', { name: $('#f-name').value.trim().replace(/\s+/g, ' '), sid: normClass($('#f-sid').value) }); startErr(''); if (f === 'f-sid') { clearTimeout(pickDeb); pickDeb = setTimeout(renderPicker, 250); } }));
+$('#f-sid').addEventListener('change', () => { clearTimeout(pickDeb); renderPicker(); });
 $('#btn-start').addEventListener('click', () => {
   const name = $('#f-name').value.trim().replace(/\s+/g, ' '), sid = normClass($('#f-sid').value);
   if (name.length < 2) { startErr('Type your full name.'); $('#f-name').focus(); return; }
   if (!sid) { startErr('Choose your class.'); $('#f-sid').focus(); return; }
   const asg = assignmentFor(sid);
   if (asg === 'closed') { startErr('This practice is not assigned to your Class / ID.'); return; }
-  if (!SEL || !allowedIds(asg).includes(SEL)) { startErr('Choose a set.'); return; }
   store.set('me', { name, sid }); startErr('');
-  CURID = SEL; store.set('curid', CURID);
-  const ps = st(SEL); if (!ps.submitted && !ps.wStart) { ps.asg = asg ? { code: asg.code, min: asg.parts[SEL] } : null; saveSt(SEL); }
+  if (asg) {
+    const ids = asgIds(asg), same = WORK && WORK.asg && normCode(WORK.asg.code) === normCode(asg.code) && JSON.stringify(WORK.ids) === JSON.stringify(ids);
+    if (!same) { WORK = { ids, asg: { code: asg.code, min: asgMin(asg) }, wStart: 0 }; saveWork(); }
+  } else {
+    if (!SEL || !allowedIds(asg).includes(SEL)) { startErr('Choose a set.'); return; }
+    WORK = { ids: [SEL], asg: null, wStart: 0 }; saveWork();
+  }
   openWork();
 });
 function openWork() {
-  if (!CURID || !PROMPTS[CURID]) { VIEW = 'start'; store.set('view', VIEW); return; }
+  if (!WORK || !WORK.ids || !WORK.ids.length || !WORK.ids.every(id => PROMPTS[id])) { VIEW = 'start'; store.set('view', VIEW); return; }
   VIEW = 'work'; store.set('view', VIEW);
   $('#start-card').hidden = true; $('#work').hidden = false;
   renderWs(); window.scrollTo({ top: 0 });
@@ -1569,86 +1692,113 @@ document.addEventListener('click', e => { if (e.target.closest('[data-back]')) o
 const setNavH = () => document.documentElement.style.setProperty('--navh', ($('nav.tabs') ? $('nav.tabs').offsetHeight : 0) + 'px');
 setNavH(); addEventListener('resize', setNavH);
 
-/* ---------- workspace: 2 base sentences × Stage 2 · 3 · 4 ---------- */
+/* ---------- workspace: each set = 2 base sentences × Stage 2 · 3 (required) · 4 (optional) ---------- */
 const me = () => store.get('me', { name: '', sid: '' });
-const stg = (n, t) => `<span class="stg stg${n}">Stage ${n} · ${esc(t)}</span>`;
+const stg = (n, t, opt) => `<span class="stg stg${n}${opt ? ' opt' : ''}">Stage ${n} · ${esc(t)}</span>`;
+const S_LABEL = S => S.label || S.t;
 function ladderHtml(p, s) {      // the model ladder (and the student's own answers when given)
   return p.sentences.map((x, i) => `<div class="ladder"><div class="lad-h">Sentence ${i + 1}</div>
     <div class="lad-row">${stg(1, 'Basic')}<p class="en">${esc(x.base)}</p></div>
-    ${STAGES.map(S => `<div class="lad-row">${stg(S.n, S.t)}${s ? `<p class="yours"><span class="lb">Yours</span>${esc(s.box[i + S.k] || '—')}</p>` : ''}<p class="en model-s"><span class="lb">Model</span>${esc(x.model[S.k])}</p></div>`).join('')}</div>`).join('');
+    ${STAGES.map(S => `<div class="lad-row">${stg(S.n, S.opt ? S.t + ' · optional' : S.t, S.opt)}${s ? `<p class="yours"><span class="lb">Yours</span>${esc(s.box[i + S.k] || (S.opt ? '— (optional, not attempted)' : '—'))}</p>` : ''}<p class="en model-s"><span class="lb">Model</span>${esc(x.model[S.k])}</p></div>`).join('')}</div>`).join('');
 }
 function setHtml(p) {
-  return `<div class="prompt"><span class="ptag">${esc(p.id + ' · ' + p.topic)}</span><p>Upgrade each base sentence in three stages:</p>
-    <ul class="dash">${STAGES.map(S => `<li><b>Stage ${S.n} · ${esc(S.t)}</b> – ${esc(S.task)}</li>`).join('')}</ul>
+  return `<div class="prompt"><span class="ptag">${esc(p.id + ' · ' + p.topic)}</span><p>Upgrade each base sentence: Stages 2 and 3 are required, Stage 4 is optional.</p>
+    <ul class="dash">${STAGES.map(S => `<li><b>Stage ${S.n} · ${esc(S.t)}${S.opt ? ' (optional)' : ''}</b> – ${esc(S.task)}</li>`).join('')}</ul>
     <ol>${p.sentences.map(x => `<li class="en">${esc(x.base)}</li>`).join('')}</ol></div>`;
 }
+const bk = (id, k) => id + '|' + k;          // a box in the combined workspace
+const openIds = () => (WORK ? WORK.ids : []).filter(id => !st(id).submitted);
+const workOpen = () => !$('#work').hidden && WORK && openIds().length;
+function sentHtml(id) {
+  const p = PROMPTS[id], s = st(id), m = mineList().find(x => s.submitted && x.clientId === s.submitted.clientId);
+  const b = m && m.bonus ? m.bonus : null;
+  return `<div class="set-done card" data-done="${esc(id)}"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><span class="eyebrow">${esc(p.type)} · ${esc((TYPES.find(x => x.id === p.type) || {}).short || '')}</span><h3 style="margin:2px 0">Set ${esc(id)} · ${esc(p.topic)}</h3></div><span class="chip g">Submitted</span></div>
+    <div class="note good" style="margin-top:8px"><span class="tag">Sent</span><p>${fmtDate(s.submitted.submittedAt)} · ${m ? m.words : '—'} words · required stage goals ${m ? m.correct + '/' + m.total : '—'}${b ? ` · Stage 4 bonus: ${b.att}/${b.n} attempted · ${b.met} met` : ''}. <span data-sendst="${esc(s.submitted.clientId)}"></span></p></div>
+    <div class="row" style="margin:10px 0"><button class="btn primary" data-machine="${esc(s.submitted.clientId)}">Open the machine check</button><button class="btn" data-goto="s-mine">My results</button></div>
+    <div class="airw" data-airw="${esc(s.submitted.clientId)}"><div class="airw-h"><b>✦ Natural rewrite</b><span class="muted small">Your own ideas, written the way a native academic writer would put them.</span></div><div class="airw-body"><button class="btn accent" data-airw-go="${esc(s.submitted.clientId)}">Show the natural rewrite</button></div></div>
+    <details class="model" style="margin-top:10px"><summary>Compare with the model ladder</summary><div style="margin-top:10px">${ladderHtml(p, s)}</div></details></div>`;
+}
 function renderWs() {
-  const id = CURID, p = PROMPTS[id], s = st(id), u = me(), T = TYPES.find(x => x.id === p.type) || { short: '' };
-  if (!p) return;
-  const box = $('#work');
-  if (s.submitted) {
-    const m = mineList().find(x => x.clientId === s.submitted.clientId);
-    box.innerHTML = `<div class="card workbar"><div><span class="eyebrow">${esc(p.type)} · ${esc(T.short)}</span><h2>Set ${esc(id)} · ${esc(p.topic)}</h2><p class="sub" style="margin:0">${esc(u.name)} · ${esc(u.sid)}</p></div><button class="btn ghost sm" data-back>← Change set</button></div>
-      <div class="stp"><div class="note good"><span class="tag">Submitted</span><p>Sent ${fmtDate(s.submitted.submittedAt)} · ${m ? m.words : '—'} words · stage goals ${m ? m.correct + '/' + m.total : '—'}. <span id="sendst"></span></p></div>
-      <div class="row" style="margin:10px 0 14px"><button class="btn primary" data-machine="${esc(s.submitted.clientId)}">Open the machine check</button><button class="btn" data-goto="s-mine">My results</button><button class="btn ghost" data-again="${esc(id)}">Write this set again</button></div>
-      <details class="model" open><summary>Compare with the model ladder</summary><div style="margin-top:10px">${ladderHtml(p, s)}</div></details></div>`;
-    const el = $('#sendst'); if (el) el.textContent = m && m.pending ? 'Not yet in the class sheet – it will be sent when you are online.' : '';
+  if (!WORK) return; const ids = WORK.ids, u = me(), box = $('#work'), group = !!WORK.asg, open = openIds();
+  const title = group ? `Class ${esc(WORK.asg.code)} · ${ids.length} set${ids.length === 1 ? '' : 's'}` : `Set ${esc(ids[0])} · ${esc(PROMPTS[ids[0]].topic)}`;
+  const eyebrow = group ? ids.join(' → ') : esc(PROMPTS[ids[0]].type) + ' · ' + esc((TYPES.find(x => x.id === PROMPTS[ids[0]].type) || {}).short || '');
+  const head = `<div class="card workbar"><div><span class="eyebrow">${eyebrow}</span><h2>${title}</h2><p class="sub" style="margin:0">${esc(u.name || '—')} · ${esc(u.sid || '—')}</p></div><button class="btn ghost sm" data-back>${group ? '← Start page' : '← Change set'}</button></div>`;
+  if (!open.length) {
+    box.innerHTML = head + `<div class="stp">${ids.map(sentHtml).join('')}
+      <div class="row" style="margin-top:12px"><button class="btn ghost" data-again>${group ? 'Write these sets again' : 'Write this set again'}</button></div></div>`;
+    ids.forEach(id => { const c = st(id).submitted.clientId, m = mineList().find(x => x.clientId === c); setSendNote(c, m ? !m.pending : null, true); });
     return;
   }
-  if (s.asg && !s.wStart) { s.wStart = Date.now(); saveSt(id); }      // the class clock starts when the set first opens
-  box.innerHTML = `<div class="card workbar"><div><span class="eyebrow">${esc(p.type)} · ${esc(T.short)}</span><h2>Set ${esc(id)} · ${esc(p.topic)}</h2><p class="sub" style="margin:0">${esc(u.name || '—')} · ${esc(u.sid || '—')}</p></div><button class="btn ghost sm" data-back>← Change set</button></div>
-    <div class="ws-bar"><div class="ws-bar-row"><span class="peek-btn on"><span class="ic">✎</span>${esc(id)}</span><span class="bar-prog" id="bprog"></span><span class="bar-tmr" id="btmr"></span></div></div>
+  if (group && !WORK.wStart) { WORK.wStart = Date.now(); saveWork(); }      // the class clock starts when the sets first open
+  const n = ids.length;
+  box.innerHTML = head + `<div class="ws-bar"><div class="ws-bar-row"><span class="peek-btn on"><span class="ic">✎</span><span id="bset">${n > 1 ? 'Set 1 of ' + n + ' · ' + esc(ids[0]) : esc(ids[0])}</span></span><span class="bar-prog" id="bprog"></span><span class="bar-tmr" id="btmr"></span></div></div>
     <div class="stp">
-      <div class="row" style="justify-content:space-between;margin-bottom:12px">${s.asg ? `<span class="tmr" id="tmr"><span class="tv">${mmss(s.asg.min * 60)}</span></span><span class="muted small">Class ${esc(s.asg.code)} · ${s.asg.min} min · your work is submitted automatically when the time is up</span>` : `<span class="tmr" id="tmr"><span class="tv">15:00</span><button type="button" data-tmr>Start</button><button type="button" data-tmr-reset>Reset</button></span><span class="muted small">Suggested: about 7 minutes per sentence</span>`}</div>
-      ${p.sentences.map((x, i) => `<div class="sent-card"><h4>Sentence ${i + 1}</h4>
-        <div class="base-row">${stg(1, 'Basic')}<p class="en">${esc(x.base)}</p></div>
-        ${STAGES.map((S, j) => `<div class="box-row" data-row="${i}${S.k}"><div class="box-h">${stg(S.n, S.t)}<span class="box-task">${esc(S.task)}</span></div>
-          <textarea data-box="${i}${S.k}" rows="2" spellcheck="false" autocomplete="off" placeholder="Stage ${S.n} sentence…">${esc(s.box[i + S.k] || '')}</textarea>
-          <div class="box-foot"><span class="hint">Hint: ${esc(x.hints[S.k])}</span><span class="row" style="gap:6px"><button type="button" class="btn ghost small" data-copy="${i}${S.k}">Copy ${j ? 'Stage ' + (S.n - 1) : 'the base'}</button><span class="chip" data-wc="${i}${S.k}"></span></span></div></div>`).join('')}
-      </div>`).join('')}
-      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted small">Saved on this device as you type.</span><button class="btn accent lg btn-submit" data-submit${SET.open ? '' : ' disabled'}>Submit for marking</button></div>
+      <div class="row" style="justify-content:space-between;margin-bottom:12px">${group ? `<span class="tmr" id="tmr"><span class="tv">${mmss(WORK.asg.min * 60)}</span></span><span class="muted small">Class ${esc(WORK.asg.code)} · ${WORK.asg.min} min for ${n === 1 ? 'the set' : 'all ' + n + ' sets'} · submitted automatically when the time is up</span>` : `<span class="tmr" id="tmr"><span class="tv">15:00</span><button type="button" data-tmr>Start</button><button type="button" data-tmr-reset>Reset</button></span><span class="muted small">Suggested: about 7 minutes per sentence</span>`}</div>
+      <div class="note info" style="margin-bottom:12px"><span class="tag">Rule</span><p><b>Stages 2 and 3 are required</b> for every sentence. <b>Stage 4 is optional</b> – try it for extra credit; a missing Stage 4 is not penalised.</p></div>
+      ${ids.map((id, si) => { const p = PROMPTS[id], s = st(id);
+        if (s.submitted) return `<section class="set-sec" data-set="${esc(id)}"><h3 class="set-h"><span class="set-n">${n > 1 ? 'Set ' + (si + 1) + ' of ' + n : 'Set'}</span>${esc(id)} · ${esc(p.topic)} <span class="chip g">✓ submitted</span></h3></section>`;
+        return `<section class="set-sec" data-set="${esc(id)}"><h3 class="set-h"><span class="set-n">${n > 1 ? 'Set ' + (si + 1) + ' of ' + n : 'Set ' + esc(id)}</span>${esc(id)} · ${esc(p.topic)} <span class="chip" data-sprog="${esc(id)}"></span></h3>
+        ${p.sentences.map((x, i) => `<div class="sent-card"><h4>Sentence ${i + 1}</h4>
+          <div class="base-row">${stg(1, 'Basic')}<p class="en">${esc(x.base)}</p></div>
+          ${STAGES.map((S, j) => { const k = i + S.k; return `<div class="box-row${S.opt ? ' box-opt' : ''}" data-row="${bk(id, k)}"><div class="box-h">${stg(S.n, S_LABEL(S), S.opt)}<span class="box-task">${esc(S.task)}</span></div>
+            <textarea data-box="${bk(id, k)}" rows="2" spellcheck="false" autocomplete="off" placeholder="Stage ${S.n} sentence${S.opt ? ' (optional)' : ''}…">${esc(s.box[k] || '')}</textarea>
+            <div class="box-foot"><span class="hint">Hint: ${esc(x.hints[S.k])}</span><span class="row" style="gap:6px"><button type="button" class="btn ghost small" data-copy="${bk(id, k)}">Copy ${j ? 'Stage ' + (S.n - 1) : 'the base'}</button><span class="chip" data-wc="${bk(id, k)}"></span></span></div></div>`; }).join('')}
+        </div>`).join('')}</section>`; }).join('')}
+      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted small">Saved on this device as you type.</span><button class="btn accent lg btn-submit" data-submit${SET.open ? '' : ' disabled'}>${open.length > 1 ? 'Submit all ' + open.length + ' sets for marking' : 'Submit for marking'}</button></div>
       <div class="status" id="wst" hidden><span class="dot"></span><span></span></div>
     </div>`;
-  paintCounts(); paintTimer();
-  if (s.asg && timeLeft(s) <= 0) submitPrompt(true);
+  paintCounts(); paintTimer(); paintBarSet();
+  if (group && timeLeft() <= 0) submitWork(true);
 }
 function paintCounts() {
-  const id = CURID, p = PROMPTS[id], s = st(id); if (!p) return;
-  boxKeys(p).forEach(k => { const el = $(`[data-wc="${k}"]`); if (!el) return; const n = wc(s.box[k]), base = wc(p.sentences[+k[0]].base); el.textContent = n + ' words'; el.className = 'chip ' + (!n ? '' : n > base + 2 ? 'g' : 'o'); });
-  const b = $('#bprog'); if (b) b.textContent = filled(s) + '/' + boxKeys(p).length + ' stages written';
+  if (!WORK) return; let tot = 0, done = 0;
+  openIds().forEach(id => { const p = PROMPTS[id], s = st(id);
+    boxKeys(p).forEach(k => { const el = $(`[data-wc="${bk(id, k)}"]`); if (!el) return; const n = wc(s.box[k]), base = wc(p.sentences[+k[0]].base); el.textContent = n + ' words'; el.className = 'chip ' + (!n ? '' : n > base + 2 ? 'g' : 'o'); });
+    const r = reqFilled(p, s), R = reqKeys(p).length; tot += R; done += r;
+    const sp = $(`[data-sprog="${id}"]`); if (sp) { sp.textContent = r + '/' + R + ' required'; sp.className = 'chip ' + (r === R ? 'g' : r ? 'o' : ''); } });
+  const b = $('#bprog'); if (b) b.textContent = done + '/' + tot + ' required stages';
 }
+function paintBarSet() {         // "Set 2 of 3 · B1": the set whose section is under the sticky bar
+  const el = $('#bset'); if (!el || !WORK) return; const secs = $$('#work .set-sec'), n = WORK.ids.length; if (n < 2 || !secs.length) return;
+  const top = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--navh')) || 0) + 90;
+  let cur = 0; secs.forEach((x, i) => { if (x.getBoundingClientRect().top < top) cur = i; });
+  el.textContent = 'Set ' + (cur + 1) + ' of ' + n + ' · ' + WORK.ids[cur];
+}
+addEventListener('scroll', () => { if (workOpen()) paintBarSet(); }, { passive: true });
 $('#work').addEventListener('input', e => {
   const ta = e.target.closest('textarea[data-box]'); if (!ta) return;
-  const s = st(CURID); s.box[ta.dataset.box] = ta.value.replace(/\n+/g, ' ').slice(0, 600);
-  if (!s.asg && !s.tRun && !s.tSec && ta.value.trim()) { s.tRun = Date.now(); paintTimer(); }
-  saveSt(CURID); paintCounts();
+  const [id, k] = ta.dataset.box.split('|'), s = st(id); s.box[k] = ta.value.replace(/\n+/g, ' ').slice(0, 600);
+  if (!WORK.asg && !s.tRun && !s.tSec && ta.value.trim()) { s.tRun = Date.now(); paintTimer(); }
+  saveSt(id); paintCounts();
 });
-function tSecNow(s) { return s.asg && s.wStart ? (Date.now() - s.wStart) / 1000 : s.tSec + (s.tRun ? (Date.now() - s.tRun) / 1000 : 0); }
-const timeLeft = s => s.asg.min * 60 - (s.wStart ? (Date.now() - s.wStart) / 1000 : 0);
+$('#work').addEventListener('focusin', e => { const sec = e.target.closest('.set-sec'); const el = $('#bset'); if (sec && el && WORK && WORK.ids.length > 1) { const i = WORK.ids.indexOf(sec.dataset.set); el.textContent = 'Set ' + (i + 1) + ' of ' + WORK.ids.length + ' · ' + sec.dataset.set; } });
+function tSecNow(s) { return WORK && WORK.asg && WORK.wStart ? (Date.now() - WORK.wStart) / 1000 : s.tSec + (s.tRun ? (Date.now() - s.tRun) / 1000 : 0); }
+const timeLeft = () => WORK.asg.min * 60 - (WORK.wStart ? (Date.now() - WORK.wStart) / 1000 : 0);
 const FREE_SEC = 900;
 function paintTimer() {
-  const el = $('#tmr'), bt = $('#btmr'); if (!el || !CURID) return; const s = st(CURID);
+  const el = $('#tmr'), bt = $('#btmr'); if (!el || !WORK) return; const s = st(WORK.ids[0]);
   let txt, cls = '';
-  if (s.asg) { const left = Math.max(0, timeLeft(s)); txt = mmss(left); cls = left <= 60 ? 'over' : left < 300 ? 'warn' : ''; }
+  if (WORK.asg) { const left = Math.max(0, timeLeft()); txt = mmss(left); cls = left <= 60 ? 'over' : left < 300 ? 'warn' : ''; }
   else { const left = FREE_SEC - tSecNow(s); txt = left >= 0 ? mmss(left) : '+' + mmss(-left) + ' over'; cls = left < 0 ? 'over' : left < 300 ? 'warn' : ''; $('[data-tmr]', el).textContent = s.tRun ? 'Pause' : (s.tSec ? 'Resume' : 'Start'); }
   $('.tv', el).textContent = txt; el.classList.toggle('warn', cls === 'warn'); el.classList.toggle('over', cls === 'over');
-  if (bt) { const on = s.asg ? !!s.wStart : !!(s.tRun || s.tSec); bt.hidden = !on; bt.textContent = '⏱ ' + txt; bt.className = 'bar-tmr' + (cls ? ' ' + cls : ''); }
+  if (bt) { const on = WORK.asg ? !!WORK.wStart : !!(s.tRun || s.tSec); bt.hidden = !on; bt.textContent = '⏱ ' + txt; bt.className = 'bar-tmr' + (cls ? ' ' + cls : ''); }
 }
-setInterval(() => { if (!CURID || $('#work').hidden) return; const s = st(CURID); if (s.submitted) return;
-  if (s.asg && s.wStart) { paintTimer(); if (timeLeft(s) <= 0) submitPrompt(true); }
-  else if (s.tRun) paintTimer(); }, 1000);
+setInterval(() => { if (!workOpen()) return;
+  if (WORK.asg && WORK.wStart) { paintTimer(); if (timeLeft() <= 0) submitWork(true); }
+  else if (st(WORK.ids[0]).tRun) paintTimer(); }, 1000);
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-tmr]'); if (t) { const s = st(CURID); if (s.tRun) { s.tSec = tSecNow(s); s.tRun = 0; } else s.tRun = Date.now(); saveSt(CURID); paintTimer(); return; }
-  const r = e.target.closest('[data-tmr-reset]'); if (r) { const s = st(CURID); s.tSec = 0; s.tRun = 0; saveSt(CURID); paintTimer(); return; }
-  const cp = e.target.closest('[data-copy]'); if (cp) { const k = cp.dataset.copy, p = PROMPTS[CURID], s = st(CURID), i = +k[0], j = STAGES.findIndex(S => S.k === k.slice(1)), src = j ? s.box[i + STAGES[j - 1].k] : p.sentences[i].base;
-    if (!String(src || '').trim()) return; const ta = $(`textarea[data-box="${k}"]`); if (ta.value.trim() && !(await ask('Replace what you wrote in this box?', 'Replace'))) return; ta.value = src; s.box[k] = src; saveSt(CURID); paintCounts(); ta.focus(); return; }
-  const sb = e.target.closest('[data-submit]'); if (sb) { submitPrompt(false); return; }
+  const t = e.target.closest('[data-tmr]'); if (t) { const s = st(WORK.ids[0]); if (s.tRun) { s.tSec = tSecNow(s); s.tRun = 0; } else s.tRun = Date.now(); saveSt(WORK.ids[0]); paintTimer(); return; }
+  const r = e.target.closest('[data-tmr-reset]'); if (r) { const s = st(WORK.ids[0]); s.tSec = 0; s.tRun = 0; saveSt(WORK.ids[0]); paintTimer(); return; }
+  const cp = e.target.closest('[data-copy]'); if (cp) { const [id, k] = cp.dataset.copy.split('|'), p = PROMPTS[id], s = st(id), i = +k[0], j = STAGES.findIndex(S => S.k === k.slice(1)), src = j ? s.box[i + STAGES[j - 1].k] : p.sentences[i].base;
+    if (!String(src || '').trim()) return; const ta = $(`textarea[data-box="${bk(id, k)}"]`); if (ta.value.trim() && !(await ask('Replace what you wrote in this box?', 'Replace'))) return; ta.value = src; s.box[k] = src; saveSt(id); paintCounts(); ta.focus(); return; }
+  const sb = e.target.closest('[data-submit]'); if (sb) { submitWork(false); return; }
   const ag = e.target.closest('[data-again]'); if (ag) {
-    const id = ag.dataset.again;
-    if (!(await ask('Write this set again? Your earlier submission stays in My results; the boxes start empty.', 'Start again'))) return;
-    const asg = assignmentFor(me().sid); PS[id] = Object.assign(freshState(), { asg: asg && asg !== 'closed' && asg.parts[id] ? { code: asg.code, min: asg.parts[id] } : null }); saveSt(id); renderPicker(); renderWs(); return;
+    if (!(await ask(WORK.ids.length > 1 ? 'Write all these sets again? Your earlier submissions stay in My results; the boxes start empty and the clock starts again.' : 'Write this set again? Your earlier submission stays in My results; the boxes start empty.', 'Start again'))) return;
+    WORK.ids.forEach(id => { PS[id] = freshState(); saveSt(id); }); WORK.wStart = 0; saveWork(); renderPicker(); renderWs(); return;
   }
-  const mc = e.target.closest('[data-machine]'); if (mc) { const m = mineList().find(x => x.clientId === mc.dataset.machine); if (m) openMachine(m); }
+  const mc = e.target.closest('[data-machine]'); if (mc) { const m = mineList().find(x => x.clientId === mc.dataset.machine); if (m) openMachine(m); return; }
+  const rw = e.target.closest('[data-airw-go]'); if (rw) { aiRewrite(rw.dataset.airwGo); return; }
+  const rc = e.target.closest('[data-airw-copy]'); if (rc) { copyRewritePrompt(rc.dataset.airwCopy, rc); }
 });
 /* the submitted text: one block per sentence, one line per stage (the review screen and the AI read it as it is) */
 function composeText(p, s) { return p.sentences.map((x, i) => `${i + 1}. Base: ${x.base}\n` + STAGES.map(S => `Stage ${S.n}: ${String(s.box[i + S.k] || '').replace(/\s+/g, ' ').trim()}`).join('\n')).join('\n\n'); }
@@ -1662,34 +1812,74 @@ function parseText(text) {
   });
   return out;
 }
+function buildEntry(id, auto, name, sid) {
+  const p = PROMPTS[id], s = st(id), keys = boxKeys(p);
+  const text = composeText(p, s), words = keys.reduce((a, k) => a + wc(s.box[k]), 0), mr = machineReview(text, p);
+  const clientId = 'c' + rnd(8), token = rnd(16), submittedAt = new Date().toISOString(), timeSec = Math.round(tSecNow(s)), correct = mr.goals.filter(g => g.ok).length, total = mr.goals.length;
+  const answers = [{ p: id, t: p.type }].concat(mr.goals.map(g => ({ k: g.k, ok: g.ok, w: wc(s.box[g.k]) }))).concat(mr.bonusGoals.map(g => ({ k: g.k, ok: g.ok, w: wc(s.box[g.k]), opt: 1 })));
+  const payload = { name, sid, clientId, token, submittedAt, startedAt: WORK && WORK.wStart ? new Date(WORK.wStart).toISOString() : '', score10: Math.round(correct / total * 100) / 10, correct, total, reading: null, listening: null, wwords: { W1: words, W2: 0 }, timeSec, auto: !!auto, mode: WORK && WORK.asg ? 'exam' : 'practice', skills: ['writing'], writing: { W1: text, W2: '' }, secTime: {}, partTime: { W1: timeSec }, answers, partsTaken: 'W1', rmax: 40, lmax: 35, assign: WORK && WORK.asg ? WORK.asg.code : '' };
+  const entry = { clientId, token, submittedAt, pid: id, name, sid, words, correct, total, bonus: mr.bonus, text, band: mr.mark, pending: payload };
+  s.tSec = timeSec; s.tRun = 0; s.submitted = { clientId, submittedAt }; s.name = name; s.sid = sid; saveSt(id);
+  return entry;
+}
 let autoBusy = false;
-async function submitPrompt(auto) {
-  const id = CURID, p = PROMPTS[id], s = st(id), stEl = $('#wst');
-  if (!p || s.submitted || (auto && autoBusy)) return; if (auto) autoBusy = true;
+async function submitWork(auto) {
+  if (!WORK) return; const ids = openIds(), stEl = $('#wst');
+  if (!ids.length || (auto && autoBusy)) return; if (auto) autoBusy = true;
   const say = (msg, kind) => { if (!stEl) return; stEl.hidden = false; stEl.className = 'status' + (kind ? ' ' + kind : ''); stEl.lastElementChild.textContent = msg; };
-  const u = me(), name = String(u.name || '').trim(), sid = normClass(u.sid), keys = boxKeys(p), n = filled(s);
+  const u = me(), name = String(u.name || '').trim(), sid = normClass(u.sid);
   if (!auto) {
     if (name.length < 2 || !sid) { say('Enter your full name and class on the start page first.', 'err'); return; }
-    if (!n) { say('Write your sentences first.', 'err'); return; }
+    if (!ids.some(id => filled(st(id)))) { say('Write your sentences first.', 'err'); return; }
     if (!SET.open) { say('Submissions are closed at the moment.', 'err'); return; }
-    if (n < keys.length && !(await ask(`You have written ${n} of the ${keys.length} stages. Submit anyway?`, 'Submit anyway'))) return;
-    if (!(await ask(`Submit set ${id} as ${name} (${sid})? You cannot edit it after this.`, 'Submit'))) return;
-    if (s.submitted) return;
+    const miss = ids.flatMap(id => reqKeys(PROMPTS[id]).filter(k => !String(st(id).box[k] || '').trim()).map(k => (ids.length > 1 ? id + ' · ' : '') + BOX_LABEL(k)));
+    if (miss.length && !(await ask(`Required stages not written yet (${miss.length}): ${miss.slice(0, 8).join('; ')}${miss.length > 8 ? '; …' : ''}. Submit anyway?`, 'Submit anyway'))) return;
+    if (!(await ask(`Submit ${ids.length > 1 ? 'all ' + ids.length + ' sets (' + ids.join(', ') + ')' : 'set ' + ids[0]} as ${name} (${sid})? You cannot edit ${ids.length > 1 ? 'them' : 'it'} after this.`, 'Submit'))) return;
+    if (!openIds().length) return;
   } else if (!$('#ask-modal').hidden) $('#ask-no').click();
   store.set('me', { name, sid });
-  const text = composeText(p, s), words = keys.reduce((a, k) => a + wc(s.box[k]), 0), mr = machineReview(text, p);
-  const clientId = 'c' + rnd(8), token = rnd(16), submittedAt = new Date().toISOString(), timeSec = Math.round(tSecNow(s)), correct = mr.goals.filter(g => g.ok).length, total = keys.length;
-  const answers = [{ p: id, t: p.type }].concat(mr.goals.map(g => ({ k: g.k, ok: g.ok, w: wc(s.box[g.k]) })));
-  const payload = { name, sid, clientId, token, submittedAt, startedAt: '', score10: Math.round(correct / total * 100) / 10, correct, total, reading: null, listening: null, wwords: { W1: words, W2: 0 }, timeSec, auto: !!auto, mode: s.asg ? 'exam' : 'practice', skills: ['writing'], writing: { W1: text, W2: '' }, secTime: {}, partTime: { W1: timeSec }, answers, partsTaken: 'W1', rmax: 40, lmax: 35, assign: s.asg ? s.asg.code : '' };
-  const entry = { clientId, token, submittedAt, pid: id, name, sid, words, correct, total, text, band: mr.mark, pending: payload };
-  store.set('mine', mineList().concat([entry]));
-  s.tSec = timeSec; s.tRun = 0; s.submitted = { clientId, submittedAt }; s.name = name; s.sid = sid; saveSt(id);
+  const entries = openIds().map(id => buildEntry(id, auto, name, sid));
+  store.set('mine', mineList().concat(entries));
   renderPicker(); renderWs();
   autoBusy = false;
   if (auto && !$('#rv-modal').hidden) closeReview();
-  openMachine(entry);
-  if (auto) $('#rv-sub').textContent = 'Time is up – your work was submitted automatically. ' + $('#rv-sub').textContent;
-  if (auto) { setSendNote(clientId, null); scheduleFlush(Math.random() * 25000); } else flushQueue();   // time-up bursts: spread the sends over 25 s
+  if (entries.length === 1) { openMachine(entries[0]); if (auto) $('#rv-sub').textContent = 'Time is up – your work was submitted automatically. ' + $('#rv-sub').textContent; }
+  else { window.scrollTo({ top: 0 }); const n = $('#work .stp'); if (n) n.insertAdjacentHTML('afterbegin', `<div class="note ${auto ? 'warn' : 'good'}" style="margin-bottom:12px"><span class="tag">${auto ? 'Time is up' : 'Submitted'}</span><p>${entries.length} sets were ${auto ? 'submitted automatically' : 'submitted'}. Open the machine check of each set below.</p></div>`); }
+  entries.forEach(m => setSendNote(m.clientId, null));
+  if (auto) scheduleFlush(Math.random() * 25000); else flushQueue();   // time-up bursts: spread the sends over 25 s
+}
+/* ---------- natural rewrite after submitting (AI on the class sheet; a copy-and-paste prompt when it is not available) ---------- */
+function rewritePrompt(m) {
+  const p = PROMPTS[m.pid];
+  return ['You are a native-speaker tutor of academic English. A B1–B2 learner upgraded two base sentences in stages:',
+    'Stage 2 adds details (who / what / where / when / how much) without a new clause; Stage 3 keeps Stage 2 and adds one reason or result clause; Stage 4 (optional) makes it academic with a noun-phrase subject, hedging and collocations.',
+    'For EVERY stage the learner wrote, give ONE natural version that a native academic writer would write. Keep the learner\'s own ideas and facts – do not add new information – and keep each version at the same stage. After each version, explain the 1–2 most useful changes in simple English. Skip stages the learner left empty.',
+    '', 'Set ' + p.id + ' · ' + p.topic, m.text, '',
+    'Answer in this format:', 'Sentence 1 · Stage 2: <natural version> — Why: <1–2 key changes>'].join('\n');
+}
+async function copyText(t) { try { await navigator.clipboard.writeText(t); return true; } catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove(); return ok; } }
+async function copyRewritePrompt(cid, btn) { const m = mineList().find(x => x.clientId === cid); if (!m) return; const ok = await copyText(rewritePrompt(m)); if (btn) { btn.textContent = ok ? '✓ Prompt copied – paste it into ChatGPT or Gemini' : 'Select the prompt below and copy it'; } }
+const RW = store.get('rw', {});        // clientId -> rewrites already received (kept on this device)
+function rewriteHtml(m, list) {
+  const p = PROMPTS[m.pid], sp = parseText(m.text);
+  return p.sentences.map((x, i) => { const rows = STAGES.map(S => { const mine = (sp.find(y => y.i === i && y.k === S.k) || {}).t || '', r = list.find(y => +y.s === i + 1 && +y.stage === S.n); if (!mine.trim() || !r) return '';
+      return `<div class="rw-row">${stg(S.n, S.t, S.opt)}<p class="yours"><span class="lb">Yours</span>${esc(mine)}</p><p class="en rw-nat"><span class="lb">Natural</span>${esc(r.text)}</p>${r.why ? `<p class="rw-why">${esc(r.why)}</p>` : ''}</div>`; }).join('');
+    return rows ? `<div class="rw-s"><div class="lad-h">Sentence ${i + 1} · <span class="muted">${esc(x.base)}</span></div>${rows}</div>` : ''; }).join('') || '<p class="muted small">No rewrite came back for these sentences.</p>';
+}
+function rewriteFallback(m, why) {
+  return `<div class="note info"><span class="tag">Do it yourself</span><p>${esc(why || 'The automatic rewrite is not switched on for this class yet.')} Copy the ready-made prompt and paste it into ChatGPT or Gemini: it asks for natural versions of <b>your</b> sentences, keeping your ideas.</p></div>
+    <div class="row" style="margin-top:8px"><button class="btn accent" data-airw-copy="${esc(m.clientId)}">Copy prompt for AI rewrite</button></div>
+    <details style="margin-top:8px"><summary class="small" style="cursor:pointer">Show the prompt</summary><textarea class="rw-prompt" readonly rows="8">${esc(rewritePrompt(m))}</textarea></details>`;
+}
+async function aiRewrite(cid) {
+  const m = mineList().find(x => x.clientId === cid), box = $(`[data-airw="${cid}"] .airw-body`); if (!m || !box) return;
+  if (RW[cid]) { box.innerHTML = rewriteHtml(m, RW[cid]); return; }
+  if (m.pending && CONFIG.API_URL) { box.innerHTML = `<p class="muted small">Your set is still being saved to the class sheet – try again in a moment.</p><button class="btn accent" data-airw-go="${esc(cid)}">Try again</button>`; return; }
+  box.innerHTML = '<p class="muted small">Writing natural versions of your sentences… (up to about 30 seconds)</p>';
+  let j = null; try { j = await api('ai_rewrite', { clientId: m.clientId, token: m.token, submittedAt: m.submittedAt }); } catch (e) { j = { ok: false, error: 'network' }; }
+  if (j && j.ok && Array.isArray(j.rewrites) && j.rewrites.length) { RW[cid] = j.rewrites.slice(0, 12); store.set('rw', RW); box.innerHTML = rewriteHtml(m, RW[cid]) + '<p class="muted small" style="margin-top:6px">AI suggestions – compare them with your sentences and keep what helps.</p>'; return; }
+  const err = String((j && j.error) || ''), off = !err || /unknown action|not connected|wrong name|test required|network/i.test(err);
+  box.innerHTML = rewriteFallback(m, off ? '' : 'The automatic rewrite is not available right now (' + err + ').');
 }
 let flushing = false, flushTimer = null, flushRound = 0;
 function scheduleFlush(ms) { clearTimeout(flushTimer); flushTimer = setTimeout(flushQueue, ms); }
@@ -1707,10 +1897,10 @@ async function flushQueue() {
   if (left && CONFIG.API_URL) { flushRound++; scheduleFlush(Math.min(90000, 12000 * flushRound) + Math.random() * 15000); }   // keep trying while the page is open
   else flushRound = 0;
 }
-function setSendNote(clientId, ok) {
+function setSendNote(clientId, ok, quiet) {
   const msg = ok === null ? 'Saving to the class sheet… you can keep working; please do not clear this browser.' : ok ? (CONFIG.API_URL ? 'Saved to the class sheet. Your teacher will review it.' : 'Saved on this device (the class sheet is not connected in this copy).') : 'The class sheet is busy – your work is safe on this device and is being sent again automatically. You can close the page; it is also resent the next time you open it.';
-  const el = $('#rv-send'); if (el && el.dataset.cid === clientId) { el.className = 'status ' + (ok ? 'ok' : ok === null ? '' : 'err'); el.hidden = false; el.lastElementChild.textContent = msg; }
-  if (CURID && st(CURID).submitted && st(CURID).submitted.clientId === clientId) { const e2 = $('#sendst'); if (e2) e2.textContent = ok ? '' : ok === null ? 'Saving to the class sheet…' : 'Not yet in the class sheet – it is being resent automatically.'; }
+  const el = $('#rv-send'); if (el && el.dataset.cid === clientId && !quiet) { el.className = 'status ' + (ok ? 'ok' : ok === null ? '' : 'err'); el.hidden = false; el.lastElementChild.textContent = msg; }
+  const e2 = $(`[data-sendst="${clientId}"]`); if (e2) e2.textContent = ok ? (quiet ? '' : 'Saved to the class sheet.') : ok === null ? 'Saving to the class sheet…' : 'Not yet in the class sheet – it is being resent automatically.';
 }
 window.addEventListener('online', flushQueue);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') flushQueue(); });
@@ -1736,8 +1926,9 @@ function nominalised(t) {      // Stage 4 wants a noun-phrase subject ("The grow
 const content = s => tok(String(s || '').toLowerCase()).filter(x => !STOP.has(x) && x.length > 2);
 const stem4 = x => x.replace(/(ies|es|s|ed|ing)$/, '').slice(0, 5);
 function machineReview(text, p) {
-  const ann = [], other = [], goals = [];
-  const add = (s, e, c, m, f, pr) => ann.push({ s, e, c, m, f: f || '', p: pr === false ? 0 : 1, q: text.slice(s, e).slice(0, 60) });
+  const ann = [], other = [], goals = [], bonusGoals = [];
+  let minorOnly = false;      // problems in the optional Stage 4 are always minor
+  const add = (s, e, c, m, f, pr) => ann.push({ s, e, c, m, f: f || '', p: pr === false || minorOnly ? 0 : 1, q: text.slice(s, e).slice(0, 60) });
   const spans = parseText(text), by = {};
   spans.forEach(x => { by[x.i + x.k] = x; });
   const R = analyse(text, { task: 2, formal: true, bullets: [], _ptext: '' });
@@ -1754,8 +1945,9 @@ function machineReview(text, p) {
     const baseW = wc(x.base), baseC = content(x.base).map(stem4);
     STAGES.forEach(S => {
       const k = i + S.k, sp = by[k], t = sp ? sp.t.trim() : '', n = wc(t), lab = 'Sentence ' + (i + 1) + ' · Stage ' + S.n;
-      if (!sp || !n) { other.push({ c: 'TF', m: lab + ' is empty – write this stage.', f: '', p: 1 }); goals.push({ k, ok: false }); return; }
+      if (!sp || !n) { if (S.opt) { bonusGoals.push({ k, ok: false, att: false }); return; } other.push({ c: 'TF', m: lab + ' is empty – write this stage.', f: '', p: 1 }); goals.push({ k, ok: false }); return; }
       const lead = sp.s + (sp.t.length - sp.t.trimStart().length), whole = [lead, lead + t.length];
+      minorOnly = !!S.opt;
       let ok = true;
       const prev = S.n === 2 ? x.base : ((by[i + STAGES[S.n - 3].k] || {}).t || '');
       if (S.n === 2) {
@@ -1768,8 +1960,8 @@ function machineReview(text, p) {
       }
       if (S.n === 4) {
         const h = HEDGE_RE.test(t), nm = nominalised(t);
-        if (!h) { ok = false; add(...whole, 'TF', 'Hedge the claim (may / tends to / is likely to)', ''); }
-        if (!nm) { ok = false; add(...whole, 'VOC', 'Make the subject a noun phrase (e.g. "The growth of…", "Regular use of…")', ''); }
+        if (!h) { ok = false; add(...whole, 'TF', 'Optional Stage 4: hedge the claim (may / tends to / is likely to)', ''); }
+        if (!nm) { ok = false; add(...whole, 'VOC', 'Optional Stage 4: make the subject a noun phrase (e.g. "The growth of…", "Regular use of…")', ''); }
       }
       if (/^[a-z]/.test(t)) { mech++; add(lead, lead + 1, 'GRA', 'Start the sentence with a capital letter', t[0].toUpperCase(), false); }
       if (!/[.!?]$/.test(t)) { mech++; add(lead + t.length - 1, lead + t.length, 'GRA', 'End the sentence with a full stop', '', false); }
@@ -1777,13 +1969,15 @@ function machineReview(text, p) {
       { let m; const re = new RegExp(VAGUE_RE.source, 'gi'); while ((m = re.exec(t))) { vague++; add(lead + m.index, lead + m.index + m[0].length, 'VOC', 'Vague or informal word – use a precise word', '', S.n === 4); } }
       if (S.n === 4) { let m; const re = new RegExp(OVER_RE.source, 'gi'); while ((m = re.exec(t))) { over++; add(lead + m.index, lead + m.index + m[0].length, 'VOC', 'Over-claim – soften it (often / many / suggests)', ''); } }
       if (n >= 50) add(...whole, 'GRA', 'Very long sentence – check that it is still clear', '', false);
-      goals.push({ k, ok });
+      if (S.opt) bonusGoals.push({ k, ok, att: true }); else goals.push({ k, ok });
+      minorOnly = false;
     });
   });
   ann.sort((a, b) => a.s - b.s || b.e - a.e);
   for (let j = ann.length - 1; j > 0; j--) if (ann[j].s === ann[j - 1].s && ann[j].e === ann[j - 1].e && ann[j].m === ann[j - 1].m) ann.splice(j, 1);
   const okN = goals.filter(g => g.ok).length, total = goals.length || 1, empty = goals.filter(g => !by[g.k] || !wc(by[g.k].t)).length;
-  const s3ok = goals.filter(g => g.k.endsWith('s3') && g.ok).length, s4ok = goals.filter(g => g.k.endsWith('s4') && g.ok).length, s2ok = goals.filter(g => g.k.endsWith('s2') && g.ok).length;
+  const s3ok = goals.filter(g => g.k.endsWith('s3') && g.ok).length, s4ok = bonusGoals.filter(g => g.ok).length, s4att = bonusGoals.filter(g => g.att).length, s2ok = goals.filter(g => g.k.endsWith('s2') && g.ok).length;
+  const bonus = { n: bonusGoals.length, att: s4att, met: s4ok };
   const gra = ann.filter(a => a.c === 'GRA' && a.p).length, sp = ann.filter(a => a.m === 'Spelling').length;
   const bands = {
     TF: half(clamp(2 + 8 * okN / total, 0, 10)),
@@ -1792,24 +1986,25 @@ function machineReview(text, p) {
     GRA: half(clamp(7.5 + 0.5 * s3ok - 0.75 * gra - 0.25 * mech - 1.5 * empty, 0, 10))
   };
   const mark = half(CATS.reduce((a, c) => a + bands[c], 0) / 4);
-  const miss = st2 => goals.filter(g => g.k.endsWith(st2) && !g.ok).length;
+  const miss = st2 => goals.concat(bonusGoals.filter(g => g.att)).filter(g => g.k.endsWith(st2) && !g.ok).length;
   const strengths = [], improve = [];
-  if (!empty) strengths.push('All six stages are written.');
+  if (!empty) strengths.push('All required stages (2 and 3) are written.');
   if (!miss('s2')) strengths.push('Stage 2 adds clear, specific detail.');
   if (!miss('s3')) strengths.push('Stage 3 links the idea to a reason or result.');
-  if (!miss('s4')) strengths.push('Stage 4 uses a noun-phrase subject and hedging.');
+  if (s4att && !miss('s4')) strengths.push('Optional Stage 4: a noun-phrase subject and hedging – well done.');
   if (!gra) strengths.push('No common grammar errors were found.');
-  if (empty) improve.push(`Write the ${empty} empty stage${empty === 1 ? '' : 's'}.`);
+  if (empty) improve.push(`Write the ${empty} empty required stage${empty === 1 ? '' : 's'}.`);
   if (miss('s2')) improve.push('Stage 2: add who / what / where / when / how much and replace vague words.');
   if (miss('s3')) improve.push('Stage 3: keep Stage 2 and add a clause with because / so / , which / as a result.');
-  if (miss('s4')) improve.push('Stage 4: start with a noun phrase (The growth of… / Regular use of…) and hedge with may / tends to / is likely to.');
+  if (miss('s4')) improve.push('Optional Stage 4: start with a noun phrase (The growth of… / Regular use of…) and hedge with may / tends to / is likely to.');
   if (vague) improve.push('Replace vague words (good, bad, a lot, thing, get) with precise ones.');
   if (over) improve.push('Soften over-claims such as always, never or everyone.');
   if (gra >= 2) improve.push('Correct the grammar patterns marked in red.');
   if (sp) improve.push('Check the spelling of the words marked.');
-  const lesson = miss('s4') ? 't-s4' : miss('s3') ? 't-s3' : miss('s2') ? 't-s2' : 't-ladder';
-  const comment = `You met ${okN} of the ${total} stage goals. ${improve.length ? 'First priority: ' + improve[0].charAt(0).toLowerCase() + improve[0].slice(1) : 'Next step: try a more precise collocation in each Stage 4 sentence.'}`;
-  return { bands, mark, ann, other, strengths: strengths.slice(0, 4), improve: improve.slice(0, 4), comment, lesson, goals };
+  if (!s4att && improve.length < 3) improve.push('Optional: try Stage 4 next time – a noun-phrase subject and a hedge earn extra credit.');
+  const lesson = miss('s3') ? 't-s3' : miss('s2') ? 't-s2' : miss('s4') || !s4att ? 't-s4' : 't-ladder';
+  const comment = `You met ${okN} of the ${total} required stage goals${s4att ? ` and ${s4ok} of ${s4att} optional Stage 4 goal${s4att === 1 ? '' : 's'}` : ''}. ${improve.length ? 'First priority: ' + improve[0].charAt(0).toLowerCase() + improve[0].slice(1) : 'Next step: try a more precise collocation in each Stage 4 sentence.'}`;
+  return { bands, mark, ann, other, strengths: strengths.slice(0, 4), improve: improve.slice(0, 4), comment, lesson, goals, bonusGoals, bonus };
 }
 
 
@@ -1890,7 +2085,7 @@ function openMachine(m) {
   const p = PROMPTS[m.pid]; if (!p) return;
   const mr = machineReview(m.text, p);
   RV = { mode: 'machine', text: m.text, p, st: mr, who: { name: m.name, sid: m.sid, submittedAt: m.submittedAt }, key: m.clientId, onlyP: false, sel: '' };
-  openModal('Machine check · ' + p.id, 'An automatic first check of your sentences. Your teacher will review it and release the official marks.', `Stage goals: <b>${m.correct}/${m.total}</b>`);
+  openModal('Machine check · ' + p.id, 'An automatic first check of your sentences. Your teacher will review it and release the official marks.', `Required stage goals: <b>${m.correct}/${m.total}</b><br>Stage 4 bonus: ${mr.bonus.att}/${mr.bonus.n} attempted · ${mr.bonus.met} met`);
   renderReview();
 }
 
@@ -1918,9 +2113,10 @@ function openTeacher(r) {
   else { const mr = machineReview(text, p); st = { bands: mr.bands, comment: mr.comment, strengths: mr.strengths, improve: mr.improve, lesson: mr.lesson, ann: mr.ann, other: mr.other, gate: [] }; src = 'Machine check (not saved yet)'; }
   st.gate = st.gate || [];
   RV = { mode: 'teacher', text, p, st, who: { name: r.name, sid: r.sid, submittedAt: r.submittedAt }, row: r, onlyP: false, sel: '', dirty: false };
-  openModal('Review & mark', 'Check the machine analysis, adjust the marks and comments, then release them to the student.', `<div id="rv-src">${esc(src)}</div><div class="saved-at" id="rv-saved"></div><div>Stage goals: <b>${r.correct}/${r.total}</b> · ${mmss(r.timeSec)}</div><div id="rv-doclink"></div>`);
+  openModal('Review & mark', 'Check the machine analysis, adjust the marks and comments, then release them to the student.', `<div id="rv-src">${esc(src)}</div><div class="saved-at" id="rv-saved"></div><div>Required stage goals: <b>${r.correct}/${r.total}</b> · ${mmss(r.timeSec)}</div><div>${bonusTxt(r)}</div><div id="rv-doclink"></div>`);
   renderReview(); docLink(g.docUrl);
 }
+function bonusTxt(r) { const o = (r.answers || []).filter(a => a && a.opt); if (!o.length) return ''; return 'Stage 4 bonus (optional): ' + o.filter(a => a.w).length + '/' + o.length + ' attempted · ' + o.filter(a => a.ok).length + ' met'; }
 function docLink(u) { const el = $('#rv-doclink'); if (el) el.innerHTML = u ? `<a href="${esc(u)}" target="_blank" rel="noopener">Open the Google Doc ↗</a>` : ''; }
 function releaseBtn() { const b = $('#rv-release'); if (!b) return; const g = RV.row.grading || {}; b.textContent = g.released ? 'Withdraw from the student' : '✈ Approve & release'; b.disabled = !g.released && !GATE.every((x, i) => RV.st.gate[i]); b.className = g.released ? 'btn danger lg' : 'btn primary lg'; }
 let draftT = null;
@@ -2038,7 +2234,7 @@ function addAiIssues(list, text = RV.text, st = RV.st) {
   st.ann.sort((a, b) => a.s - b.s);
   return { placed, general, dup };
 }
-const aiReq = (r, p) => ({ clientId: r.clientId, submittedAt: r.submittedAt, context: { issues: true, W1: { situation: 'Sentence upgrade practice: the student rewrites ' + p.sentences.length + ' base sentences through Stage 2 (details: who/what/where/when/how much), Stage 3 (+ a reason or result clause) and Stage 4 (academic: nominalised subject + hedging + collocations). Base sentences: ' + p.sentences.map((x, i) => (i + 1) + '. ' + x.base).join(' '), set: [], instruction: 'Grade how well each stage meets its goal; task = stage goals met, organization = logical clause links, vocabulary = precise/academic word choice and collocations, grammar = accuracy. Quote errors exactly as written in the student lines.', points: p.sentences.flatMap((x, i) => STAGES.map(S => 'Sentence ' + (i + 1) + ' Stage ' + S.n + ' (' + S.t + ')')), minWords: 60 } } });
+const aiReq = (r, p) => ({ clientId: r.clientId, submittedAt: r.submittedAt, context: { issues: true, W1: { situation: 'Sentence upgrade practice: the student rewrites ' + p.sentences.length + ' base sentences through Stage 2 (details: who/what/where/when/how much, REQUIRED), Stage 3 (+ a reason or result clause, REQUIRED) and Stage 4 (academic: nominalised subject + hedging + collocations, OPTIONAL – never penalise a missing Stage 4; give extra credit for a good one in vocabulary). Base sentences: ' + p.sentences.map((x, i) => (i + 1) + '. ' + x.base).join(' '), set: [], instruction: 'Grade how well each stage meets its goal; task = required stage goals (2 and 3) met, organization = logical clause links, vocabulary = precise/academic word choice and collocations, grammar = accuracy. Quote errors exactly as written in the student lines.', points: p.sentences.flatMap((x, i) => STAGES.map(S => 'Sentence ' + (i + 1) + ' Stage ' + S.n + ' (' + S.t + (S.opt ? ', optional' : ', required') + ')')), minWords: 40 } } });
 async function teacherAi() {
   const r = RV.row, p = RV.p, btn = $('#rv-ai'); btn.disabled = true; rvStatus('Asking the AI for marks and a list of errors… (up to about 30 seconds)');
   try {
@@ -2144,7 +2340,7 @@ $('#btn-fb-hide').addEventListener('click', () => { Object.keys(FB).forEach(k =>
 function renderMine() {
   const L = mineList().slice().sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)), tb = $('#mine-tbl tbody');
   tb.innerHTML = L.length ? L.map(m => { const f = FB[m.clientId], p = PROMPTS[m.pid] || { title: '' };
-    return `<tr><td>${fmtDate(m.submittedAt)}${m.pending ? ' <span class="att">not sent</span>' : ''}</td><td class="wrap">${esc(m.pid)} · ${esc(p.title)}</td><td>${esc(m.name)}<br><span class="muted small">${esc(m.sid)}</span></td><td class="n">${m.correct}/${m.total}</td><td class="n">${m.words}</td><td><button class="btn small" data-machine="${esc(m.clientId)}">Open</button></td><td>${f ? `<b>${f1(f.overall)}</b>/10 <button class="btn primary small" data-fbopen="${esc(m.clientId)}">Open review</button>` : `<span class="muted small">${FB_WHO && norm(m.name) === FB_WHO ? 'not released yet' : 'type your name above'}</span>`}</td><td></td></tr>`; }).join('') : '<tr><td colspan="8" class="empty">No sets submitted on this device yet.</td></tr>';
+    return `<tr><td>${fmtDate(m.submittedAt)}${m.pending ? ' <span class="att">not sent</span>' : ''}</td><td class="wrap">${esc(m.pid)} · ${esc(p.title)}</td><td>${esc(m.name)}<br><span class="muted small">${esc(m.sid)}</span></td><td class="n">${m.correct}/${m.total}${m.bonus && m.bonus.att ? `<br><span class="muted small">+ Stage 4: ${m.bonus.met}/${m.bonus.att}</span>` : ''}</td><td class="n">${m.words}</td><td><button class="btn small" data-machine="${esc(m.clientId)}">Open</button></td><td>${f ? `<b>${f1(f.overall)}</b>/10 <button class="btn primary small" data-fbopen="${esc(m.clientId)}">Open review</button>` : `<span class="muted small">${FB_WHO && norm(m.name) === FB_WHO ? 'not released yet' : 'type your name above'}</span>`}</td><td></td></tr>`; }).join('') : '<tr><td colspan="8" class="empty">No sets submitted on this device yet.</td></tr>';
 }
 $('#mine-tbl').addEventListener('click', e => {
   const b = e.target.closest('[data-fbopen]'); if (!b) return; const m = mineList().find(x => x.clientId === b.dataset.fbopen), f = FB[b.dataset.fbopen]; if (!m || !f) return;
@@ -2168,7 +2364,7 @@ function cleanRows(rows) {
   const key = x => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, ''), freq = {}, canon = {};
   (rows || []).forEach(r => { if (!r) return; const c = normClass(r.sid), k = key(c); freq[k] = freq[k] || {}; freq[k][c] = (freq[k][c] || 0) + 1; });
   Object.keys(freq).forEach(k => { canon[k] = Object.keys(freq[k]).sort((a, b) => freq[k][b] - freq[k][a] || (b.includes('-') - a.includes('-')) || a.localeCompare(b))[0]; });
-  return (rows || []).filter(r => r && r.name && promptOf(r)).map(r => Object.assign({}, r, { sid: canon[key(normClass(r.sid))] || normClass(r.sid), correct: +r.correct || 0, total: +r.total || 6, words: +(r.wwords && r.wwords.W1) || 0, timeSec: +r.timeSec || 0, pid: promptOf(r) }))
+  return (rows || []).filter(r => r && r.name && promptOf(r)).map(r => Object.assign({}, r, { sid: canon[key(normClass(r.sid))] || normClass(r.sid), correct: +r.correct || 0, total: +r.total || 4, words: +(r.wwords && r.wwords.W1) || 0, timeSec: +r.timeSec || 0, pid: promptOf(r) }))
     .filter(r => { const k = r.clientId + '|' + r.submittedAt; if (seen.has(k)) return false; seen.add(k); return true; })
     .sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
 }
@@ -2185,10 +2381,10 @@ function renderReport() {
   const students = new Set(rows.map(r => norm(r.name) + '|' + r.sid)).size, avgA = rows.length ? rows.reduce((a, r) => a + r.correct / r.total, 0) / rows.length * 100 : 0, avgW = rows.length ? rows.reduce((a, r) => a + r.words, 0) / rows.length : 0, full = rows.length ? rows.filter(r => r.correct === r.total).length / rows.length * 100 : 0;
   const graded = rows.filter(r => r.grading && r.grading.overall !== null && r.grading.overall !== undefined && r.grading.gradedAt);
   const kpi = (v, l) => `<div class="stat"><div class="big">${v}</div><div class="lbl">${l}</div></div>`;
-  $('#rp-kpis').innerHTML = kpi(rows.length, 'sets submitted') + kpi(students, 'students') + kpi(Math.round(avgA) + '<small>%</small>', 'stage goals met') + kpi(Math.round(avgW), 'average words') + kpi(Math.round(full) + '<small>%</small>', 'meet all 6 goals') + (isStaff() ? kpi(graded.length ? f1(graded.reduce((a, r) => a + +r.grading.overall, 0) / graded.length) : '—', `average teacher mark (${graded.length} marked)`) : '');
+  $('#rp-kpis').innerHTML = kpi(rows.length, 'sets submitted') + kpi(students, 'students') + kpi(Math.round(avgA) + '<small>%</small>', 'stage goals met') + kpi(Math.round(avgW), 'average words') + kpi(Math.round(full) + '<small>%</small>', 'meet all required goals') + (isStaff() ? kpi(graded.length ? f1(graded.reduce((a, r) => a + +r.grading.overall, 0) / graded.length) : '—', `average teacher mark (${graded.length} marked)`) : '');
   $('#rp-types tbody').innerHTML = TYPES.map(T => { const R = rows.filter(r => PROMPTS[r.pid].type === T.id); return `<tr><td>${T.id} · ${esc(T.short)}</td><td class="n">${R.length}</td><td class="n">${R.length ? Math.round(R.reduce((a, r) => a + r.correct / r.total, 0) / R.length * 100) + '%' : '—'}</td><td class="n">${R.length ? Math.round(R.filter(r => r.correct === r.total).length / R.length * 100) + '%' : '—'}</td><td class="n">${R.length ? Math.round(R.reduce((a, r) => a + r.words, 0) / R.length) : '—'}</td></tr>`; }).join('');
-  const acc = STAGES.map(S => { let n = 0, ok = 0; rows.forEach(r => (r.answers || []).forEach(a => { if (a && a.k && a.k.slice(1) === S.k) { n++; if (a.ok) ok++; } })); return { S, n, pct: n ? ok / n * 100 : null }; }).filter(x => x.n).sort((a, b) => a.pct - b.pct);
-  $('#rp-bars').innerHTML = acc.length ? acc.map(x => `<div class="bar"><div class="n">Stage ${x.S.n} · ${esc(x.S.t)}</div><div class="t"><div class="f${x.pct < 60 ? ' low' : ''}" style="width:${x.pct}%"></div></div><div class="v">${Math.round(x.pct)}%</div></div>`).join('') : '<p class="empty">No data yet.</p>';
+  const acc = STAGES.map(S => { let n = 0, ok = 0; rows.forEach(r => (r.answers || []).forEach(a => { if (a && a.k && a.k.slice(1) === S.k && (!S.opt || a.w)) { n++; if (a.ok) ok++; } })); return { S, n, pct: n ? ok / n * 100 : null }; }).filter(x => x.n).sort((a, b) => a.pct - b.pct);
+  $('#rp-bars').innerHTML = acc.length ? acc.map(x => `<div class="bar"><div class="n">Stage ${x.S.n} · ${esc(x.S.t)}${x.S.opt ? ' (optional, when tried)' : ''}</div><div class="t"><div class="f${x.pct < 60 ? ' low' : ''}" style="width:${x.pct}%"></div></div><div class="v">${Math.round(x.pct)}%</div></div>`).join('') : '<p class="empty">No data yet.</p>';
   if (!(SET.showRanking || isStaff())) { $('#rank-box').innerHTML = '<p class="muted">The ranking is hidden by the teacher.</p>'; return; }
   const best = new Map(); rows.forEach(r => { const k = norm(r.name) + '|' + r.sid, b = best.get(k); const sc = r.correct / r.total; if (!b) best.set(k, { name: r.name, sid: r.sid, best: sc, n: 1, words: r.words }); else { b.n++; if (sc > b.best || (sc === b.best && r.words > b.words)) { b.best = sc; b.words = r.words; } } });
   const R = [...best.values()].sort((a, b) => b.best - a.best || b.n - a.n || b.words - a.words).slice(0, 30);
@@ -2313,17 +2509,18 @@ $('#btn-subs-csv').addEventListener('click', () => {
   const q = v => { let x = String(v === null || v === undefined ? '' : v); if (/^[=+\-@\t\r]/.test(x)) x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; };
   const iso = v => { const d = v ? new Date(v) : null; if (!d || isNaN(d)) return ''; const z = n => String(n).padStart(2, '0'); return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); };
   const head = ['Submitted', 'Name', 'Class / ID', 'Assigned class', 'Set', 'Topic', 'Type', 'Mode', 'Auto-submitted (time up)', 'Time (min)', 'Words',
-    'Stage goals met', 'Stage goals total'].concat([0, 1].flatMap(i => STAGES.map(S => 'Sentence ' + (i + 1) + ' · Stage ' + S.n))).concat(['Status', 'Graded by', 'Graded at', 'Mark', 'Task fulfilment', 'Organization', 'Vocabulary', 'Grammar',
+    'Required stage goals met', 'Required stage goals total', 'Stage 4 bonus (attempted / met)'].concat([0, 1].flatMap(i => STAGES.map(S => 'Sentence ' + (i + 1) + ' · Stage ' + S.n))).concat(['Status', 'Graded by', 'Graded at', 'Mark', 'Task fulfilment', 'Organization', 'Vocabulary', 'Grammar',
     'Overall comment', 'Strengths', 'Priorities', 'Suggested lesson', 'Issues (count)', 'Issues (numbered)', 'Released at', 'Google Doc', 'Text']);
   const L = filteredSubs();
   const lines = [head.map(q).join(',')].concat(L.map(r => {
     const g = r.grading || {}, st = g.gradedAt ? stFromFeedback((g.feedback || {}).W1, (g.feedback || {}).general) : null, b = st ? st.bands : {}, p = PROMPTS[r.pid], text = (r.writing || {}).W1 || '';
-    const ok = {}; (r.answers || []).forEach(a => { if (a && a.k) ok[a.k] = !!a.ok; });
-    const steps = [0, 1].flatMap(i => STAGES.map(S => ok[i + S.k] === undefined ? '' : ok[i + S.k] ? 'met' : 'not met'));
+    const ok = {}, w = {}; (r.answers || []).forEach(a => { if (a && a.k) { ok[a.k] = !!a.ok; w[a.k] = +a.w || 0; } });
+    const steps = [0, 1].flatMap(i => STAGES.map(S => ok[i + S.k] === undefined ? '' : S.opt && !w[i + S.k] ? 'not attempted (optional)' : ok[i + S.k] ? 'met' : 'not met'));
+    const bo = (r.answers || []).filter(a => a && a.opt), bonus = bo.length ? bo.filter(a => a.w).length + ' / ' + bo.filter(a => a.ok).length : '';
     const IL = st ? orderIssues(st) : [];      // same numbering as the review screen
     const iss = IL.map(x => { const a = x.a; return x.n + '. [' + (CAT[a.c] || a.c) + (a.p ? '' : ' · minor') + (a.ai ? ' · AI' : '') + '] ' + (x.kind === 'a' ? '"' + (text.slice(a.s, a.e) || a.q || '') + '" – ' : '') + a.m + (a.f ? ' → ' + a.f : ''); }).join('\n');
     return [iso(r.submittedAt), r.name, r.sid, r.assign || '', r.pid, p.topic, p.type, r.mode || '', r.auto ? 'yes' : '', (r.timeSec / 60).toFixed(1), r.words,
-      r.correct, r.total].concat(steps).concat([gstate(r), g.gradedBy || '', iso(g.gradedAt), g.gradedAt ? g.overall : '', b.TF, b.ORG, b.VOC, b.GRA,
+      r.correct, r.total, bonus].concat(steps).concat([gstate(r), g.gradedBy || '', iso(g.gradedAt), g.gradedAt ? g.overall : '', b.TF, b.ORG, b.VOC, b.GRA,
       st ? st.comment : '', st ? st.strengths.join('\n') : '', st ? st.improve.join('\n') : '', st && LESSONS[st.lesson] ? LESSONS[st.lesson][0] : '', st ? IL.length : '', iss,
       g.released ? iso(g.releasedAt) : '', g.docUrl || '', text]).map(q).join(',');
   }));
@@ -2345,7 +2542,7 @@ function ask(msg, okLabel) {
 /* ====================== BOOT ====================== */
 (function () { const u = me(); $('#f-name').value = u.name || ''; $('#f-sid').value = u.sid || ''; })();
 renderPicker();
-if (VIEW === 'work' && CURID && PROMPTS[CURID]) openWork(); else openStart();
+if (VIEW === 'work' && WORK) openWork(); else openStart();
 applySettings();
 (function () {
   const h = decodeURIComponent(location.hash.slice(1)), el = h && document.getElementById(h);
@@ -2355,7 +2552,7 @@ applySettings();
   if (el && sh && el !== sh) setTimeout(() => el.scrollIntoView({ block: 'start' }), 60);
 })();
 refreshSettings(); flushQueue(); quietFbCount();
-if (/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(location.host)) window.__su = { machineReview, composeText, PROMPTS, STAGES };   // test hook on local copies only
+if (/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(location.host)) window.__su = { machineReview, composeText, PROMPTS, STAGES, get WORK() { return WORK; } };   // test hook on local copies only
 if (isStaff() && !$('#s-staff').hidden) renderStaff();
 })();
 
