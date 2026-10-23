@@ -1123,6 +1123,7 @@
   <section class="block" id="m-list">
     <h3>My submissions</h3>
     <div class="tablewrap"><table class="tbl" id="mine-tbl"><thead><tr><th>Submitted</th><th>Set</th><th>Name</th><th class="n">Stage goals</th><th class="n">Words</th><th>Machine check</th><th>Teacher</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost small" type="button" id="mine-clear">Clear this device</button></div>
   </section>
 </section>
 
@@ -2409,6 +2410,16 @@ $('#mine-tbl').addEventListener('click', e => {
   RV = { mode: 'student', text: m.text, p, st, who: { name: m.name, sid: m.sid, submittedAt: m.submittedAt }, key: m.clientId, onlyP: false, sel: '', releasedAt: f.releasedAt };
   openModal('Teacher review · ' + p.id, p.title, f.docUrl ? `<a class="btn ghost small" href="${esc(f.docUrl)}" target="_blank" rel="noopener">Open in Google Docs</a>` : '');
   renderReview();
+});
+/* "Clear this device": removes this browser's own copies (submitted sets, drafts, workspace) – nothing on the class sheet changes.
+   Refused while a set is still waiting to be sent, so no work can be lost. */
+$('#mine-clear').addEventListener('click', async () => {
+  const L = mineList();
+  if (L.some(m => m.pending)) { alert('A set is still being sent to the class sheet. Wait until every row says "Saved", then clear.'); return; }
+  if (!(await ask('Remove every set, draft and result copy saved in this browser? Your teacher still has the sets on the class sheet.', 'Clear'))) return;
+  const pre = CONFIG.KEY + ':', keep = new Set([pre + 'settings', pre + 'settingsAt']);
+  try { Object.keys(localStorage).filter(k => k.startsWith(pre) && !keep.has(k)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  location.hash = ''; location.reload();
 });
 async function quietFbCount() {   // on load: only says that something was released, never shows marks before the name check
   const mine = mineList().filter(m => !m.pending); if (!mine.length) return;
