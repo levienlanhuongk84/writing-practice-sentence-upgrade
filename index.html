@@ -953,120 +953,108 @@
   <style>
     /* theory infographic: stage colours and function colours match academic-writing-step-by-step (Level 4 · Upgrade a sentence) */
     .tg { --st1: #8B7C99; --st2: #2A62C4; --st3: #DD5A28; --st4: #613087; }
-    .tg-card { background: var(--surface, #fff); border: 1px solid var(--line, #E6DDF0); border-radius: 12px; padding: 12px 14px; }
-    .tg-key { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
-    .tg-key b { font: 700 .72em var(--font-cond, inherit); letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #8B7C99); margin-right: 4px; }
-    .tg-pill { display: inline-block; font: 700 .74em var(--font-cond, inherit); letter-spacing: .06em; text-transform: uppercase; color: #fff; border-radius: 999px; padding: 3px 10px; }
+    section.block.tg > h3 { border-left: 0; padding-left: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .tg-pill { display: inline-block; font: 700 .72em var(--font-cond, inherit); letter-spacing: .06em; text-transform: uppercase; color: #fff; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
     .tg-p1 { background: var(--st1); } .tg-p2 { background: var(--st2); } .tg-p3 { background: var(--st3); } .tg-p4 { background: var(--st4); }
-    .tg-opt { background: #fff; color: var(--st4); border: 1.5px dashed var(--st4); }
-    .tg-rule { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px; margin-top: 10px; }
-    .tg-rule > div { border-radius: 12px; padding: 10px 14px; font-weight: 500; }
-    .tg-req { background: #E3ECFB; border: 2px solid var(--st2); }
-    .tg-enc { background: #F2EAF8; border: 2px dashed var(--st4); }
-    .tg-rule strong { display: block; font-size: 1.05em; margin-bottom: 2px; }
-    .tg-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; counter-reset: st; }
-    .tg-step { position: relative; background: var(--surface, #fff); border: 1px solid var(--line, #E6DDF0); border-top: 5px solid var(--c); border-radius: 12px; padding: 10px 12px; }
-    .tg-step .tg-pill { background: var(--c); }
-    .tg-step.opt { border-style: dashed; border-top-style: solid; }
-    .tg-step h4 { margin: 6px 0 4px; font-size: 1em; }
-    .tg-step p { margin: 0; font-size: .92em; color: var(--ink-2, #5A4C68); }
-    .tg-step .tg-ex { margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--line-strong, #CDB9E1); font-style: italic; font-size: .92em; color: var(--ink, #241530); }
-    .tg-step:not(:last-child)::after { content: "→"; position: absolute; right: -9px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--muted, #8B7C99); background: var(--bg, #FBF9FC); border-radius: 50%; width: 18px; text-align: center; }
-    @media (max-width: 760px) { .tg-flow { grid-template-columns: minmax(0, 1fr); } .tg-step:not(:last-child)::after { content: "↓"; right: auto; left: 50%; top: auto; bottom: -15px; transform: translateX(-50%); } }
-    .tg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 10px; }
-    .tg-box { background: var(--surface, #fff); border: 1px solid var(--line, #E6DDF0); border-left: 5px solid var(--c); border-radius: 10px; padding: 9px 12px; }
-    .tg-box .q { font-weight: 700; color: var(--c); }
-    .tg-box .ex { display: block; margin-top: 3px; font-style: italic; font-size: .92em; }
-    .tg-arrow { color: var(--muted, #8B7C99); font-style: normal; font-weight: 700; padding: 0 3px; }
-    .tg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0; }
-    .tg-chip { font: 600 .9em var(--font, inherit); border-radius: 8px; padding: 2px 9px; border: 1.5px solid var(--c); background: #fff; color: var(--ink, #241530); }
-    .tg-warn { margin-top: 10px; border-radius: 10px; padding: 8px 12px; background: #FCEBDD; border-left: 4px solid #DD5A28; font-size: .94em; }
-    .tg-warn b { color: #B8471E; }
-    .tg-lad { display: grid; gap: 8px; }
-    .tg-lad > div { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 10px; align-items: start; background: var(--surface, #fff); border: 1px solid var(--line, #E6DDF0); border-left: 5px solid var(--c); border-radius: 10px; padding: 8px 12px; }
-    .tg-lad .s { line-height: 2; }
-    .tg-lad .add { grid-column: 2; font-size: .88em; color: var(--ink-2, #5A4C68); }
-    .tg-lad .add mark { background: #FFF4D6; border-radius: 4px; padding: 0 3px; color: inherit; }
-    @media (max-width: 560px) { .tg-lad > div { grid-template-columns: minmax(0, 1fr); } .tg-lad .add { grid-column: 1; } }
+    .tg-opt { background: transparent; color: var(--st4); border: 1.5px dashed var(--st4); }
+    .tg-sheet { background: var(--surface, #fff); border: 1px solid var(--line, #E6DDF0); border-radius: 12px; overflow: hidden; }
+    .tg-row { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 14px; padding: 12px 16px; align-items: start; }
+    .tg-row + .tg-row { border-top: 1px solid var(--line, #E6DDF0); }
+    .tg-row .lab { display: grid; gap: 4px; justify-items: start; }
+    .tg-row .lab small { color: var(--ink-2, #5A4C68); font-size: .86em; line-height: 1.35; }
+    .tg-row .q { font-weight: 700; }
+    .tg-row .sent { font-size: 1.02em; line-height: 2; }
+    .tg-row .sent.base { color: var(--ink-2, #5A4C68); }
+    .tg-row.opt { background: repeating-linear-gradient(135deg, transparent 0 10px, rgba(97,48,135,.04) 10px 20px); }
+    .tg-add { background: #FFF1C2; border-radius: 4px; padding: 0 3px; font-weight: 600; color: #3A2A00; }
+    .tg-rule { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 10px; margin-top: 12px; }
+    .tg-rule > div { border-radius: 12px; padding: 10px 14px; }
+    .tg-req { background: #E3ECFB; color: #17305E; }
+    .tg-enc { background: #F2EAF8; color: #3A1C61; }
+    .tg-rule strong { display: block; margin-bottom: 2px; }
+    .tg-key { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; padding: 12px 16px; }
+    .tg-key + .tg-key { border-top: 1px solid var(--line, #E6DDF0); }
+    .tg-key > span:first-child { font: 700 .74em var(--font-cond, inherit); letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #8B7C99); min-width: 110px; }
+    .tg-note { margin-top: 10px; border-radius: 10px; padding: 9px 14px; background: #FCEBDD; color: #4A2410; font-size: .95em; }
+    .tg-note b { color: #B8471E; }
+    .tg-chip { display: inline-block; font-weight: 600; border-radius: 6px; padding: 0 7px; margin: 2px 2px 2px 0; background: #FCEBDD; color: #8E3A14; font-size: .92em; }
+    @media (max-width: 640px) { .tg-row { grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 10px 12px; } .tg-key > span:first-child { min-width: 0; width: 100%; } }
     /* function colours (same as the theory page) */
-    .tg .g { border-radius: 4px; padding: 0 2px; font-style: normal; }
+    .tg .g { border-radius: 4px; padding: 0 2px; font-style: normal; color: #17101F; }
     .tg .g::after { white-space: nowrap; font: 700 .58em var(--font, inherit); vertical-align: super; margin-left: 1px; }
     .tg .g-s { background: #DCE8FB; box-shadow: inset 0 -2px 0 #2A62C4; } .tg .g-s::after { content: "S"; color: #2A62C4; }
     .tg .g-v { background: #FBE0DE; box-shadow: inset 0 -2px 0 #B23B3B; } .tg .g-v::after { content: "V"; color: #B23B3B; }
     .tg .g-o { background: #DCF0E3; box-shadow: inset 0 -2px 0 #2E7D4F; } .tg .g-o::after { content: "O/C"; color: #2E7D4F; }
     .tg .g-c { background: #EFE4F7; color: #4A2467; font-weight: 700; } .tg .g-c::after { content: "conj"; color: #613087; }
     .tg .g-ph { background: #DDF2EF; box-shadow: inset 0 -2px 0 #0E7C74; } .tg .g-ph::after { content: "phrase"; color: #0E7C74; }
-    .tg .g-dc { border: 1.5px dashed #DD5A28; padding: 1px 3px; } .tg .g-dc::after { content: none; }
+    .tg .g-dc { border: 1.5px dashed #DD5A28; padding: 1px 3px; background: #FFF7F2; } .tg .g-dc::after { content: none; }
     .tg .g-rc { border: 1.5px dotted #A6740A; padding: 1px 3px; background: #FFF6DC; } .tg .g-rc::after { content: none; }
-    :root[data-theme="dark"] .tg .g, :root[data-theme="dark"] .tg-chip, :root[data-theme="dark"] .tg-req, :root[data-theme="dark"] .tg-enc, :root[data-theme="dark"] .tg-warn, :root[data-theme="dark"] .tg-lad mark { color: #17101F; }
-    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tg .g, :root:not([data-theme="light"]) .tg-chip, :root:not([data-theme="light"]) .tg-req, :root:not([data-theme="light"]) .tg-enc, :root:not([data-theme="light"]) .tg-warn, :root:not([data-theme="light"]) .tg-lad mark { color: #17101F; } }
-    :root[data-theme="dark"] .tg-box .q, :root[data-theme="dark"] .tg-step h4 { color: #F1E9F8; }
-    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tg-box .q, :root:not([data-theme="light"]) .tg-step h4 { color: #F1E9F8; } }
   </style>
 
   <section class="block tg" id="t-stages">
     <h3>The 4 stages at a glance</h3>
-    <div class="tg-flow">
-      <div class="tg-step" style="--c: var(--st1)"><span class="tg-pill">Stage 1 · Basic</span><h4>The base sentence</h4><p>Subject + verb + object. Given in every task.</p><div class="tg-ex">Cars cause pollution.</div></div>
-      <div class="tg-step" style="--c: var(--st2)"><span class="tg-pill">Stage 2 · Detail</span><h4>Add details</h4><p>Who? What? Where? When? How much? No new clause yet.</p><div class="tg-ex">Private cars cause serious air pollution in big cities.</div></div>
-      <div class="tg-step" style="--c: var(--st3)"><span class="tg-pill">Stage 3 · Clause</span><h4>Add a reason or result</h4><p>Keep Stage 2 and add one clause.</p><div class="tg-ex">…, which harms the health of millions of residents.</div></div>
-      <div class="tg-step opt" style="--c: var(--st4)"><span class="tg-pill">Stage 4 · Academic</span><h4>Make it academic <small>(optional)</small></h4><p>Noun-phrase subject + hedging + collocations.</p><div class="tg-ex">The rapid growth in car ownership is likely to…</div></div>
+    <div class="tg-sheet">
+      <div class="tg-row"><div class="lab"><span class="tg-pill tg-p1">Stage 1 · Basic</span><small>The base sentence you are given</small></div><div class="sent base">Cars cause pollution.</div></div>
+      <div class="tg-row"><div class="lab"><span class="tg-pill tg-p2">Stage 2 · Detail</span><small>Add who, what, where, when, how much</small></div><div class="sent"><span class="tg-add">Private</span> cars cause <span class="tg-add">serious air</span> pollution <span class="tg-add">in big cities</span>.</div></div>
+      <div class="tg-row"><div class="lab"><span class="tg-pill tg-p3">Stage 3 · Clause</span><small>Keep Stage 2 + add a reason or result</small></div><div class="sent">Private cars cause serious air pollution in big cities<span class="tg-add">, which harms the health of millions of residents</span>.</div></div>
+      <div class="tg-row opt"><div class="lab"><span class="tg-pill tg-p4">Stage 4 · Academic</span><span class="tg-pill tg-opt">optional</span><small>Noun-phrase subject + hedge + collocation</small></div><div class="sent"><span class="tg-add">The rapid growth in private car ownership is likely to be a major cause of</span> air pollution in large cities, which <span class="tg-add">poses a serious threat to public health</span>.</div></div>
     </div>
     <div class="tg-rule">
-      <div class="tg-req"><strong>Stages 2 and 3: required</strong>Write both for every sentence in every set you are given.</div>
-      <div class="tg-enc"><strong>Stage 4: encouraged</strong>Try it for extra credit. A missing Stage 4 is never marked down.</div>
+      <div class="tg-req"><strong>Stages 2 and 3 · required</strong>Write both for every sentence in every set you are given.</div>
+      <div class="tg-enc"><strong>Stage 4 · encouraged</strong>Try it for extra credit. A missing Stage 4 is never marked down.</div>
     </div>
   </section>
 
   <section class="block tg" id="t-key">
     <h3>Colour key</h3>
-    <div class="tg-card tg-key">
-      <b>Stages</b><span class="tg-pill tg-p1">1 Basic</span><span class="tg-pill tg-p2">2 Detail</span><span class="tg-pill tg-p3">3 Clause</span><span class="tg-pill tg-p4">4 Academic</span>
-    </div>
-    <div class="tg-card tg-key" style="margin-top:8px">
-      <b>Sentence parts</b><span class="g g-s">subject</span><span class="g g-v">verb</span><span class="g g-o">object / complement</span><span class="g g-c">connector</span><span class="g g-ph">phrase</span><span class="g g-dc">dependent clause</span><span class="g g-rc">relative clause</span>
+    <div class="tg-sheet">
+      <div class="tg-key"><span>Stages</span><span class="tg-pill tg-p1">1 Basic</span><span class="tg-pill tg-p2">2 Detail</span><span class="tg-pill tg-p3">3 Clause</span><span class="tg-pill tg-p4">4 Academic</span><span class="tg-add">new words you add</span></div>
+      <div class="tg-key"><span>Sentence parts</span><span class="g g-s">subject</span><span class="g g-v">verb</span><span class="g g-o">object / complement</span><span class="g g-c">connector</span><span class="g g-ph">phrase</span><span class="g g-dc">dependent clause</span><span class="g g-rc">relative clause</span></div>
     </div>
   </section>
 
   <section class="block tg" id="t-s2">
     <h3><span class="tg-pill tg-p2">Stage 2</span> Add detail: answer 5 questions</h3>
-    <div class="tg-grid">
-      <div class="tg-box" style="--c: var(--st2)"><span class="q">Who exactly?</span><span class="ex">children <span class="tg-arrow">→</span> many primary schoolchildren</span></div>
-      <div class="tg-box" style="--c: var(--st2)"><span class="q">What exactly?</span><span class="ex">phones <span class="tg-arrow">→</span> smartphones · helps <span class="tg-arrow">→</span> creates jobs</span></div>
-      <div class="tg-box" style="--c: var(--st2)"><span class="q">Where?</span><span class="ex">in rural areas · in big cities</span></div>
-      <div class="tg-box" style="--c: var(--st2)"><span class="q">When?</span><span class="ex">during rush hours · over the past five years</span></div>
-      <div class="tg-box" style="--c: var(--st2)"><span class="q">How much / how often?</span><span class="ex">a lot <span class="tg-arrow">→</span> for several hours a day</span></div>
+    <div class="tg-sheet">
+      <div class="tg-row"><div class="lab"><span class="q">Base sentence</span></div><div class="sent base">Children use phones a lot.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">1 · Who exactly?</span></div><div class="sent"><span class="tg-add">Many primary schoolchildren</span> use phones a lot.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">2 · What exactly?</span></div><div class="sent">Many primary schoolchildren use <span class="tg-add">smartphones</span> a lot.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">3 · How much / how often?</span></div><div class="sent">Many primary schoolchildren use smartphones <span class="tg-add">for several hours a day</span>.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">4 · Where? 5 · When?</span><small>only if it helps the idea</small></div><div class="sent">Many primary schoolchildren use smartphones for several hours a day <span class="tg-add">at home after school</span>.</div></div>
+      <div class="tg-row"><div class="lab"><span class="tg-pill tg-p2">Stage 2 sentence</span></div><div class="sent"><span class="g g-s">Many primary schoolchildren</span> <span class="g g-v">use</span> <span class="g g-o">smartphones</span> <span class="g g-ph">for several hours a day</span>.</div></div>
     </div>
-    <div class="tg-warn"><b>Replace vague words:</b> good · bad · a lot · thing · big · get <span class="tg-arrow">→</span> a precise noun, verb or fact.</div>
+    <div class="tg-note"><b>Replace vague words</b> with a precise noun, verb or fact: <span class="tg-chip">good</span><span class="tg-chip">bad</span><span class="tg-chip">a lot</span><span class="tg-chip">thing</span><span class="tg-chip">big</span><span class="tg-chip">get</span> · No new clause yet.</div>
   </section>
 
   <section class="block tg" id="t-s3">
     <h3><span class="tg-pill tg-p3">Stage 3</span> Add one reason or result clause</h3>
-    <div class="tg-grid">
-      <div class="tg-box" style="--c: var(--st3)"><span class="q">Reason</span><div class="tg-chips" style="--c: var(--st3)"><span class="tg-chip">because + S + V</span><span class="tg-chip">as + S + V</span></div></div>
-      <div class="tg-box" style="--c: var(--st3)"><span class="q">Result</span><div class="tg-chips" style="--c: var(--st3)"><span class="tg-chip">, so + S + V</span><span class="tg-chip">, which + V</span><span class="tg-chip">. As a result, …</span></div></div>
-      <div class="tg-box" style="--c: var(--st3)"><span class="q">Contrast</span><div class="tg-chips" style="--c: var(--st3)"><span class="tg-chip">Although + S + V, …</span></div></div>
+    <div class="tg-sheet">
+      <div class="tg-row"><div class="lab"><span class="q">Stage 2 sentence</span></div><div class="sent base">Many primary schoolchildren use smartphones for several hours a day.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">Reason</span><small>because / as + S + V</small></div><div class="sent">Many primary schoolchildren use smartphones for several hours a day <span class="tg-add">because their parents give them phones to keep them busy</span>.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">Result</span><small>, so + S + V · , which + V</small></div><div class="sent">Many primary schoolchildren use smartphones for several hours a day<span class="tg-add">, which leaves them less time for sleep and outdoor play</span>.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">Contrast</span><small>Although + S + V, …</small></div><div class="sent"><span class="tg-add">Although doctors recommend less screen time,</span> many primary schoolchildren use smartphones for several hours a day.</div></div>
     </div>
-    <div class="tg-warn"><b>Punctuation:</b> a comma <b>before</b> <i>so</i> and <i>, which</i>; no comma before <i>because</i> in the middle of a sentence.</div>
+    <div class="tg-note"><b>Punctuation:</b> a comma before <i>so</i> and <i>, which</i> · no comma before <i>because</i> in the middle of a sentence · a comma after an <i>Although</i> clause at the start.</div>
   </section>
 
   <section class="block tg" id="t-s4">
     <h3><span class="tg-pill tg-p4">Stage 4</span> Make it academic <span class="tg-pill tg-opt">optional</span></h3>
-    <div class="tg-grid">
-      <div class="tg-box" style="--c: var(--st4)"><span class="q">1 · Nominalise the subject</span><span class="ex">people eat fast food <span class="tg-arrow">→</span> regular consumption of fast food</span></div>
-      <div class="tg-box" style="--c: var(--st4)"><span class="q">2 · Hedge the claim</span><div class="tg-chips" style="--c: var(--st4)"><span class="tg-chip">is likely to</span><span class="tg-chip">may</span><span class="tg-chip">could</span><span class="tg-chip">tends to</span><span class="tg-chip">appears to</span></div></div>
-      <div class="tg-box" style="--c: var(--st4)"><span class="q">3 · Use collocations</span><div class="tg-chips" style="--c: var(--st4)"><span class="tg-chip">pose a threat to</span><span class="tg-chip">contribute to</span><span class="tg-chip">reduce the risk of</span></div></div>
+    <div class="tg-sheet">
+      <div class="tg-row"><div class="lab"><span class="q">Stage 3 sentence</span></div><div class="sent base">Many primary schoolchildren use smartphones for several hours a day, which leaves them less time for sleep and outdoor play.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">1 · Nominalise the subject</span><small>the action becomes a noun phrase</small></div><div class="sent"><span class="tg-add">Excessive smartphone use among primary schoolchildren</span> leaves them less time for sleep and outdoor play.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">2 · Hedge the claim</span><small>is likely to · may · could · tends to</small></div><div class="sent">Excessive smartphone use among primary schoolchildren <span class="tg-add">is likely to reduce</span> the time they spend sleeping and playing outdoors.</div></div>
+      <div class="tg-row"><div class="lab"><span class="q">3 · Add a collocation</span><small>pose a threat to · contribute to · harm … development</small></div><div class="sent">Excessive smartphone use among primary schoolchildren is likely to reduce the time they spend sleeping and playing outdoors, which <span class="tg-add">may harm their physical development</span>.</div></div>
     </div>
-    <div class="tg-warn"><b>Avoid:</b> always · never · everyone · proves · contractions · a lot of · stuff · kids</div>
+    <div class="tg-note"><b>Avoid</b> over-claiming and spoken words: <span class="tg-chip">always</span><span class="tg-chip">never</span><span class="tg-chip">everyone</span><span class="tg-chip">proves</span><span class="tg-chip">a lot of</span><span class="tg-chip">stuff</span><span class="tg-chip">kids</span><span class="tg-chip">can't</span></div>
   </section>
 
   <section class="block tg" id="t-ladder">
     <h3>One sentence, four stages</h3>
-    <div class="tg-lad">
-      <div style="--c: var(--st1)"><span class="tg-pill tg-p1">Stage 1 · Basic</span><span class="s"><span class="g g-s">Fast food</span> <span class="g g-v">is</span> <span class="g g-o">bad</span>.</span></div>
-      <div style="--c: var(--st2)"><span class="tg-pill tg-p2">Stage 2 · Detail</span><span class="s"><span class="g g-s">Regular fast-food meals</span> <span class="g g-v">are</span> <span class="g g-o">high in salt, sugar and fat</span>.</span><span class="add">+ <mark>Regular … meals</mark> how often, what exactly · + <mark>high in salt, sugar and fat</mark> replaces <i>bad</i></span></div>
-      <div style="--c: var(--st3)"><span class="tg-pill tg-p3">Stage 3 · Clause</span><span class="s"><span class="g g-s">Regular fast-food meals</span> <span class="g g-v">are</span> <span class="g g-o">high in salt, sugar and fat</span>, <span class="g g-c">so</span> <span class="g g-s">they</span> <span class="g g-v">increase</span> <span class="g g-o">the risk of obesity and heart disease</span>.</span><span class="add">+ <mark>, so they increase the risk of …</mark> a result clause</span></div>
-      <div style="--c: var(--st4)"><span class="tg-pill tg-p4">Stage 4 · Academic</span><span class="s"><span class="g g-s">Regular consumption of fast food</span> <span class="g g-v">is likely to increase</span> <span class="g g-o">the risk of obesity and heart disease</span>, <span class="g g-ph">particularly among young adults</span>.</span><span class="add">+ <mark>Regular consumption of</mark> nominalised subject · + <mark>is likely to</mark> hedge · + <mark>particularly among young adults</mark> narrows the claim</span></div>
+    <div class="tg-sheet">
+      <div class="tg-row"><div class="lab"><span class="tg-pill tg-p1">Stage 1</span></div><div class="sent"><span class="g g-s">Fast food</span> <span class="g g-v">is</span> <span class="g g-o">bad</span>.</div></div>
+      <div class="tg-row"><div class="lab"><span class="tg-pill tg-p2">Stage 2</span><small>how often + what exactly</small></div><div class="sent"><span class="g g-s">Regular fast-food meals</span> <span class="g g-v">are</span> <span class="g g-o">high in salt, sugar and fat</span>.</div></div>
+      <div class="tg-row"><div class="lab"><span class="tg-pill tg-p3">Stage 3</span><small>+ a result clause</small></div><div class="sent"><span class="g g-s">Regular fast-food meals</span> <span class="g g-v">are</span> <span class="g g-o">high in salt, sugar and fat</span>, <span class="g g-c">so</span> <span class="g g-s">they</span> <span class="g g-v">increase</span> <span class="g g-o">the risk of obesity and heart disease</span>.</div></div>
+      <div class="tg-row opt"><div class="lab"><span class="tg-pill tg-p4">Stage 4</span><small>noun-phrase subject + hedge</small></div><div class="sent"><span class="g g-s">Regular consumption of fast food</span> <span class="g g-v">is likely to increase</span> <span class="g g-o">the risk of obesity and heart disease</span>, <span class="g g-ph">particularly among young adults</span>.</div></div>
     </div>
     <p class="small" style="margin-top:10px"><a href="https://levienlanhuongk84.github.io/academic-writing-step-by-step/#lc-cap-4" target="_blank" rel="noopener">Full lesson: Level 4 · Upgrade a sentence in 4 stages ↗</a></p>
   </section>
