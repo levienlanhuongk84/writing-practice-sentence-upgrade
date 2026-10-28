@@ -867,6 +867,16 @@
 /* the latest assignment row = the only code students can pick */
 #as-rows .as-row:last-of-type { border-color: var(--good, #2E7D4F); box-shadow: inset 0 0 0 1px var(--good, #2E7D4F); }
 #as-rows .as-row:last-of-type::before { content: "✓ Latest — the only code students see"; display: inline-block; margin-bottom: 8px; font: 700 .74em var(--font-cond, inherit); letter-spacing: .06em; text-transform: uppercase; color: #fff; background: var(--good, #2E7D4F); border-radius: 999px; padding: 3px 10px; }
+/* one submission with several sets (28/10): set headings in the review text and ladders, set list in the tables */
+.es-set { font: 700 1em var(--font); color: var(--orange-ink); background: var(--orange-soft); border-radius: 10px; padding: 7px 12px; margin: 16px 0 10px; }
+.es-set:first-child { margin-top: 0; }
+.lad-set { margin: 14px 0 6px; padding: 6px 12px; border-radius: 10px; background: var(--orange-soft); color: var(--orange-ink); font: 700 1em var(--font); }
+.lad-set:first-child, .lad-title + .lad-set { margin-top: 4px; }
+.chip.wrap-chip { white-space: normal; text-align: right; max-width: 60%; line-height: 1.3; }
+.set-cell { min-width: 150px; }
+.set-cell .set-i { display: block; white-space: normal; line-height: 1.35; }
+.set-cell .set-i + .set-i { margin-top: 2px; }
+.warn-t { color: var(--orange-ink); font-weight: 700; margin-top: 4px; }
 
   /* ===== LH Master Hero — background art taken from the approved mock (logo, glow, ribbons fixed); only eyebrow / title / 3 chips change.
      Geometry measured on the mock at 1997×277 px: 1 mock px = 0.050075cqw. ===== */
@@ -1162,7 +1172,7 @@
         <span style="flex:1"></span>
         <button class="btn accent" id="btn-ai-all" disabled>✦ AI draft all</button><button class="btn" id="btn-subs-refresh">Refresh</button><button class="btn" id="btn-subs-csv">Download CSV</button><button class="btn danger" id="btn-clear-all" hidden>Delete all results</button>
       </div>
-      <div class="tablewrap"><table class="tbl" id="subs-tbl"><thead><tr><th>Submitted</th><th>Name</th><th>Class / ID</th><th>Set</th><th class="n">Stage goals</th><th class="n">Words</th><th class="n">Time</th><th>Mark</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div class="tablewrap"><table class="tbl" id="subs-tbl"><thead><tr><th>Submitted</th><th>Name</th><th>Class / ID</th><th>Set</th><th class="n">Stage goals</th><th class="n">Words</th><th class="n">Time</th><th>Mark</th><th>Review</th><th>Delete</th></tr></thead><tbody></tbody></table></div>
     </section>
     <section class="block" id="st-settings">
       <h3>Settings</h3>
@@ -1524,6 +1534,23 @@ const reqKeys = p => p.sentences.flatMap((x, i) => REQ.map(S => i + S.k));
 const isOptKey = k => k.endsWith('s4');
 const reqFilled = (p, s) => reqKeys(p).filter(k => String((s.box || {})[k] || '').trim()).length;
 const BOX_LABEL = k => 'Sentence ' + (+k[0] + 1) + ' · Stage ' + k.slice(2);
+/* one submission = one row, even when a class writes several sets in one sitting: its set id is "A1,B1,C1",
+   its text has a "Set A1 · Topic" line before each set, and its sentences are numbered across the whole submission */
+const pidsOf = pid => String(pid || '').split(',').map(x => x.trim()).filter(id => PROMPTS[id]);
+const COMBO = {};
+function combo(pid) {
+  const want = pidsOf(pid), ids = ORDER.filter(id => want.includes(id)); if (!ids.length) return null; if (ids.length === 1) return PROMPTS[ids[0]];
+  const key = ids.join(','); if (COMBO[key]) return COMBO[key];
+  const L = ids.map(id => PROMPTS[id]), topic = L.map(p => p.id + ' ' + p.topic).join(' · ');
+  return (COMBO[key] = { id: key, ids, multi: true, type: L.map(p => p.type).join(','), topic, title: topic,
+    sentences: L.flatMap(p => p.sentences.map((x, j) => Object.assign({}, x, { set: p.id, n: j + 1 }))) });
+}
+const pIds = p => p.ids || [p.id];
+const pLabel = p => p.multi ? p.topic : p.id + ' · ' + p.topic;
+const setHead = id => 'Set ' + id + ' · ' + PROMPTS[id].topic;
+const joinTexts = (ids, texts) => ids.length === 1 ? texts[0] : ids.map((id, i) => setHead(id) + '\n' + texts[i]).join('\n\n');
+const keyNo = k => parseInt(k, 10);                       // "12s3" → 12
+const keyStage = k => String(k).replace(/^\d+/, '');      // "12s3" → "s3"
 const LESSONS = {
   't-stages': ['The 4 stages', 'Basic → Detail → Clause (required) → Academic (optional)'],
   't-s2': ['Stage 2 · Add detail', 'Who, what, where, when, how much – replace vague words'],
@@ -1636,7 +1663,7 @@ const mineList = () => store.get('mine', []);
 const filled = s => Object.values(s.box || {}).filter(v => String(v || '').trim()).length;
 
 function promptStatus(id) {
-  const s = st(id), mine = mineList().filter(m => m.pid === id);
+  const s = st(id), mine = mineList().filter(m => pidsOf(m.pid).includes(id));
   if (mine.some(m => FB[m.clientId])) return ['Feedback ready', 'done'];
   if (s.submitted) return ['Submitted', 'done'];
   if (mine.length && !filled(s)) return ['Submitted ×' + mine.length, 'done'];
@@ -1686,7 +1713,7 @@ function renderPicker() {
   }
   $('#pick-h').textContent = 'Choose a set';
   if (SEL && !allow.includes(SEL)) { SEL = ''; store.set('sel', SEL); }
-  $('#type-pick').innerHTML = TYPES.map(T => { const ids = DATA.filter(p => p.type === T.id).map(p => p.id).filter(id => allow.includes(id)), sub = ids.filter(id => mineList().some(m => m.pid === id)).length;
+  $('#type-pick').innerHTML = TYPES.map(T => { const ids = DATA.filter(p => p.type === T.id).map(p => p.id).filter(id => allow.includes(id)), sub = ids.filter(id => mineList().some(m => pidsOf(m.pid).includes(id))).length;
     if (!ids.length) return '';
     return `<div class="skill${SEL && PROMPTS[SEL].type === T.id ? ' on' : ''}"><div class="head"><span><b>${T.id} · ${esc(T.short)}</b><small>${ids.map(id => esc(PROMPTS[id].topic)).filter((x, i, a) => a.indexOf(x) === i).join(' · ')} · ${sub}/${ids.length} submitted</small></span></div>
       <div class="pchips">${ids.map(id => { const [st2, c] = promptStatus(id); return `<button type="button" class="${SEL === id ? 'on' : ''} ${c}" data-pick="${id}" title="${esc(PROMPTS[id].topic + ' · ' + st2)}">${id}${c === 'done' ? ' ✓' : c === 'go' ? ' …' : ''}</button>`; }).join('')}</div></div>`; }).join('');
@@ -1734,7 +1761,7 @@ const me = () => store.get('me', { name: '', sid: '' });
 const stg = (n, t, opt) => `<span class="stg stg${n}${opt ? ' opt' : ''}">Stage ${n} · ${esc(t)}</span>`;
 const S_LABEL = S => S.label || S.t;
 function ladderHtml(p, s) {      // the model ladder (and the student's own answers when given)
-  return p.sentences.map((x, i) => `<div class="ladder"><div class="lad-h">Sentence ${i + 1}</div>
+  return p.sentences.map((x, i) => `${x.set && (!i || p.sentences[i - 1].set !== x.set) ? `<h5 class="lad-set">${esc(setHead(x.set))}</h5>` : ''}<div class="ladder"><div class="lad-h">Sentence ${x.n || i + 1}</div>
     <div class="lad-row">${stg(1, 'Basic')}<p class="en">${esc(x.base)}</p></div>
     ${STAGES.map(S => `<div class="lad-row">${stg(S.n, S.opt ? S.t + ' · optional' : S.t, S.opt)}${s ? `<p class="yours"><span class="lb">Yours</span>${esc(s.box[i + S.k] || (S.opt ? '— (optional, not attempted)' : '—'))}</p>` : ''}<p class="en model-s"><span class="lb">Model</span>${esc(x.model[S.k])}</p></div>`).join('')}</div>`).join('');
 }
@@ -1743,17 +1770,19 @@ function setHtml(p) {
     <ul class="dash">${STAGES.map(S => `<li><b>Stage ${S.n} · ${esc(S.t)}${S.opt ? ' (optional)' : ''}</b> – ${esc(S.task)}</li>`).join('')}</ul>
     <ol>${p.sentences.map(x => `<li class="en">${esc(x.base)}</li>`).join('')}</ol></div>`;
 }
+const setsHtml = p => pIds(p).map(id => setHtml(PROMPTS[id])).join('');
 const bk = (id, k) => id + '|' + k;          // a box in the combined workspace
 const openIds = () => (WORK ? WORK.ids : []).filter(id => !st(id).submitted);
 const workOpen = () => !$('#work').hidden && WORK && openIds().length;
-function sentHtml(id) {
-  const p = PROMPTS[id], s = st(id), m = mineList().find(x => s.submitted && x.clientId === s.submitted.clientId);
-  const b = m && m.bonus ? m.bonus : null;
-  return `<div class="set-done card" data-done="${esc(id)}"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><span class="eyebrow">${esc(p.type)} · ${esc((TYPES.find(x => x.id === p.type) || {}).short || '')}</span><h3 style="margin:2px 0">Set ${esc(id)} · ${esc(p.topic)}</h3></div><span class="chip g">Submitted</span></div>
-    <div class="note good" style="margin-top:8px"><span class="tag">Sent</span><p>${fmtDate(s.submitted.submittedAt)} · ${m ? m.words : '—'} words · required stage goals ${m ? m.correct + '/' + m.total : '—'}${b ? ` · Stage 4 bonus: ${b.att}/${b.n} attempted · ${b.met} met` : ''}. <span data-sendst="${esc(s.submitted.clientId)}"></span></p></div>
-    <div class="row" style="margin:10px 0"><button class="btn primary" data-machine="${esc(s.submitted.clientId)}">Open the machine check</button><button class="btn" data-goto="s-mine">My results</button></div>
-    <div class="airw" data-airw="${esc(s.submitted.clientId)}"><div class="airw-h"><b>✦ Natural rewrite</b><span class="muted small">Your own ideas, written the way a native academic writer would put them.</span></div><div class="airw-body"><button class="btn accent" data-airw-go="${esc(s.submitted.clientId)}">Show the natural rewrite</button></div></div>
-    <div class="model-lad" style="margin-top:12px"><h4 class="lad-title">Compare with the model ladder</h4>${ladderHtml(p, s)}</div></div>`;
+function sentHtml(ids) {         // one card per submission (a class sitting = all its sets in one card)
+  const s0 = st(ids[0]), cid = s0.submitted.clientId, m = mineList().find(x => x.clientId === cid), b = m && m.bonus ? m.bonus : null, P = PROMPTS[ids[0]];
+  const title = ids.length > 1 ? ids.length + ' sets · ' + ids.map(id => id + ' ' + PROMPTS[id].topic).join(' · ') : 'Set ' + ids[0] + ' · ' + P.topic;
+  const eyebrow = ids.length > 1 ? 'One submission' : P.type + ' · ' + ((TYPES.find(x => x.id === P.type) || {}).short || '');
+  return `<div class="set-done card" data-done="${esc(ids.join(','))}"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><span class="eyebrow">${esc(eyebrow)}</span><h3 style="margin:2px 0">${esc(title)}</h3></div><span class="chip g">Submitted</span></div>
+    <div class="note good" style="margin-top:8px"><span class="tag">Sent</span><p>${fmtDate(s0.submitted.submittedAt)} · ${m ? m.words : '—'} words · required stage goals ${m ? m.correct + '/' + m.total : '—'}${b ? ` · Stage 4 bonus: ${b.att}/${b.n} attempted · ${b.met} met` : ''}. <span data-sendst="${esc(cid)}"></span></p></div>
+    <div class="row" style="margin:10px 0"><button class="btn primary" data-machine="${esc(cid)}">Open the machine check</button><button class="btn" data-goto="s-mine">My results</button></div>
+    <div class="airw" data-airw="${esc(cid)}"><div class="airw-h"><b>✦ Natural rewrite</b><span class="muted small">Your own ideas, written the way a native academic writer would put them.</span></div><div class="airw-body"><button class="btn accent" data-airw-go="${esc(cid)}">Show the natural rewrite</button></div></div>
+    <div class="model-lad" style="margin-top:12px"><h4 class="lad-title">Compare with the model ladder</h4>${ids.map(id => (ids.length > 1 ? `<h5 class="lad-set">${esc(setHead(id))}</h5>` : '') + ladderHtml(PROMPTS[id], st(id))).join('')}</div></div>`;
 }
 function renderWs() {
   if (!WORK) return; const ids = WORK.ids, u = me(), box = $('#work'), group = !!WORK.asg, open = openIds();
@@ -1761,9 +1790,10 @@ function renderWs() {
   const eyebrow = group ? ids.join(' → ') : esc(PROMPTS[ids[0]].type) + ' · ' + esc((TYPES.find(x => x.id === PROMPTS[ids[0]].type) || {}).short || '');
   const head = `<div class="card workbar"><div><span class="eyebrow">${eyebrow}</span><h2>${title}</h2><p class="sub" style="margin:0">${esc(u.name || '—')} · ${esc(u.sid || '—')}</p></div><button class="btn ghost sm" data-back>${group ? '← Start page' : '← Change set'}</button></div>`;
   if (!open.length) {
-    box.innerHTML = head + `<div class="stp">${ids.map(sentHtml).join('')}
+    const subs = []; ids.forEach(id => { const c = st(id).submitted.clientId, g = subs.find(x => x.c === c); if (g) g.ids.push(id); else subs.push({ c, ids: [id] }); });
+    box.innerHTML = head + `<div class="stp">${subs.map(g => sentHtml(g.ids)).join('')}
       <div class="row" style="margin-top:12px"><button class="btn ghost" data-again>${group ? 'Write these sets again' : 'Write this set again'}</button></div></div>`;
-    ids.forEach(id => { const c = st(id).submitted.clientId, m = mineList().find(x => x.clientId === c); setSendNote(c, m ? !m.pending : null, true); });
+    subs.forEach(g => { const m = mineList().find(x => x.clientId === g.c); setSendNote(g.c, m ? !m.pending : null, true); });
     return;
   }
   if (group && !WORK.wStart) { WORK.wStart = Date.now(); saveWork(); }      // the class clock starts when the sets first open
@@ -1833,30 +1863,31 @@ document.addEventListener('click', async e => {
     if (!(await ask(WORK.ids.length > 1 ? 'Write all these sets again? Your earlier submissions stay in My results; the boxes start empty and the clock starts again.' : 'Write this set again? Your earlier submission stays in My results; the boxes start empty.', 'Start again'))) return;
     WORK.ids.forEach(id => { PS[id] = freshState(); saveSt(id); }); WORK.wStart = 0; saveWork(); renderPicker(); renderWs(); return;
   }
-  const mc = e.target.closest('[data-machine]'); if (mc) { const m = mineList().find(x => x.clientId === mc.dataset.machine); if (m) openMachine(m); return; }
+  const mc = e.target.closest('[data-machine]'); if (mc) { const m = mineSubs().find(x => x.cids.includes(mc.dataset.machine)); if (m) openMachine(m); return; }
   const rw = e.target.closest('[data-airw-go]'); if (rw) { aiRewrite(rw.dataset.airwGo); return; }
   const rc = e.target.closest('[data-airw-copy]'); if (rc) { copyRewritePrompt(rc.dataset.airwCopy, rc); }
 });
 /* the submitted text: one block per sentence, one line per stage (the review screen and the AI read it as it is) */
 function composeText(p, s) { return p.sentences.map((x, i) => `${i + 1}. Base: ${x.base}\n` + STAGES.map(S => `Stage ${S.n}: ${String(s.box[i + S.k] || '').replace(/\s+/g, ' ').trim()}`).join('\n')).join('\n\n'); }
-function parseText(text) {
+function parseText(text) {           // i = sentence number across the whole submission (each set restarts at "1. Base:")
   const out = []; let i = -1, pos = 0;
   String(text || '').split('\n').forEach(line => {
-    const b = line.match(/^(\d+)\. Base:/); if (b) i = +b[1] - 1;
+    if (/^\d+\. Base:/.test(line)) i++;
     const m = line.match(/^Stage ([234]): ?/);
     if (m && i >= 0) out.push({ i, k: 's' + m[1], s: pos + m[0].length, e: pos + line.length, t: line.slice(m[0].length) });
     pos += line.length + 1;
   });
   return out;
 }
-function buildEntry(id, auto, name, sid) {
-  const p = PROMPTS[id], s = st(id), keys = boxKeys(p);
-  const text = composeText(p, s), words = keys.reduce((a, k) => a + wc(s.box[k]), 0), mr = machineReview(text, p);
-  const clientId = 'c' + rnd(8), token = rnd(16), submittedAt = new Date().toISOString(), timeSec = Math.round(tSecNow(s)), correct = mr.goals.filter(g => g.ok).length, total = mr.goals.length;
-  const answers = [{ p: id, t: p.type }].concat(mr.goals.map(g => ({ k: g.k, ok: g.ok, w: wc(s.box[g.k]) }))).concat(mr.bonusGoals.map(g => ({ k: g.k, ok: g.ok, w: wc(s.box[g.k]), opt: 1 })));
+function buildEntry(ids, auto, name, sid) {      // ONE row for the whole sitting, however many sets it holds
+  const p = combo(ids.join(',')), text = joinTexts(ids, ids.map(id => composeText(PROMPTS[id], st(id)))), mr = machineReview(text, p);
+  const box = {}; parseText(text).forEach(x => { box[x.i + x.k] = x.t; });
+  const words = Object.values(box).reduce((a, t) => a + wc(t), 0);
+  const clientId = 'c' + rnd(8), token = rnd(16), submittedAt = new Date().toISOString(), timeSec = Math.round(tSecNow(st(ids[0]))), correct = mr.goals.filter(g => g.ok).length, total = mr.goals.length;
+  const answers = [ids.length > 1 ? { p: p.id, t: 'multi' } : { p: p.id, t: p.type }].concat(mr.goals.map(g => ({ k: g.k, ok: g.ok, w: wc(box[g.k]) }))).concat(mr.bonusGoals.map(g => ({ k: g.k, ok: g.ok, w: wc(box[g.k]), opt: 1 })));
   const payload = { name, sid, clientId, token, submittedAt, startedAt: WORK && WORK.wStart ? new Date(WORK.wStart).toISOString() : '', score10: Math.round(correct / total * 100) / 10, correct, total, reading: null, listening: null, wwords: { W1: words, W2: 0 }, timeSec, auto: !!auto, mode: WORK && WORK.asg ? 'exam' : 'practice', skills: ['writing'], writing: { W1: text, W2: '' }, secTime: {}, partTime: { W1: timeSec }, answers, partsTaken: 'W1', rmax: 40, lmax: 35, assign: WORK && WORK.asg ? WORK.asg.code : '' };
-  const entry = { clientId, token, submittedAt, pid: id, name, sid, words, correct, total, bonus: mr.bonus, text, band: mr.mark, pending: payload };
-  s.tSec = timeSec; s.tRun = 0; s.submitted = { clientId, submittedAt }; s.name = name; s.sid = sid; saveSt(id);
+  const entry = { v: 2, clientId, token, submittedAt, pid: p.id, name, sid, words, correct, total, bonus: mr.bonus, text, band: mr.mark, pending: payload };
+  ids.forEach(id => { const s = st(id); s.tSec = timeSec; s.tRun = 0; s.submitted = { clientId, submittedAt }; s.name = name; s.sid = sid; saveSt(id); });
   return entry;
 }
 let autoBusy = false;
@@ -1875,33 +1906,39 @@ async function submitWork(auto) {
     if (!openIds().length) return;
   } else if (!$('#ask-modal').hidden) $('#ask-no').click();
   store.set('me', { name, sid });
-  const entries = openIds().map(id => buildEntry(id, auto, name, sid));
-  store.set('mine', mineList().concat(entries));
+  const entry = buildEntry(openIds(), auto, name, sid);
+  store.set('mine', mineList().concat([entry]));
   renderPicker(); renderWs();
   autoBusy = false;
   if (auto && !$('#rv-modal').hidden) closeReview();
-  if (entries.length === 1) { openMachine(entries[0]); if (auto) $('#rv-sub').textContent = 'Time is up – your work was submitted automatically. ' + $('#rv-sub').textContent; }
-  else { window.scrollTo({ top: 0 }); const n = $('#work .stp'); if (n) n.insertAdjacentHTML('afterbegin', `<div class="note ${auto ? 'warn' : 'good'}" style="margin-bottom:12px"><span class="tag">${auto ? 'Time is up' : 'Submitted'}</span><p>${entries.length} sets were ${auto ? 'submitted automatically' : 'submitted'}. Open the machine check of each set below.</p></div>`); }
-  entries.forEach(m => setSendNote(m.clientId, null));
+  openMachine(entry); if (auto) $('#rv-sub').textContent = 'Time is up – your work was submitted automatically. ' + $('#rv-sub').textContent;
+  setSendNote(entry.clientId, null);
   if (auto) scheduleFlush(Math.random() * 25000); else flushQueue();   // time-up bursts: spread the sends over 25 s
 }
 /* ---------- natural rewrite after submitting (AI on the class sheet; a copy-and-paste prompt when it is not available) ---------- */
 function rewritePrompt(m) {
-  const p = PROMPTS[m.pid];
+  const p = combo(m.pid);
   return ['You are a native-speaker tutor of academic English. A B1–B2 learner upgraded two base sentences in stages:',
     'Stage 2 adds details (who / what / where / when / how much) without a new clause; Stage 3 keeps Stage 2 and adds one reason or result clause; Stage 4 (optional) makes it academic with a noun-phrase subject, hedging and collocations.',
     'For EVERY stage the learner wrote, give ONE natural version that a native academic writer would write. Keep the learner\'s own ideas and facts – do not add new information – and keep each version at the same stage. After each version, explain the 1–2 most useful changes in simple English. Skip stages the learner left empty.',
-    '', 'Set ' + p.id + ' · ' + p.topic, m.text, '',
-    'Answer in this format:', 'Sentence 1 · Stage 2: <natural version> — Why: <1–2 key changes>'].join('\n');
+    '', p.multi ? p.ids.length + ' sets: ' + p.topic : 'Set ' + p.id + ' · ' + p.topic, m.text, '',
+    'Answer in this format:', (p.multi ? 'Set ' + p.ids[0] + ' · ' : '') + 'Sentence 1 · Stage 2: <natural version> — Why: <1–2 key changes>'].join('\n');
 }
 async function copyText(t) { try { await navigator.clipboard.writeText(t); return true; } catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove(); return ok; } }
 async function copyRewritePrompt(cid, btn) { const m = mineList().find(x => x.clientId === cid); if (!m) return; const ok = await copyText(rewritePrompt(m)); if (btn) { btn.textContent = ok ? '✓ Prompt copied – paste it into ChatGPT or Gemini' : 'Select the prompt below and copy it'; } }
 const RW = store.get('rw', {});        // clientId -> rewrites already received (kept on this device)
+function rwIndex(p, list) {     // the AI's sentence number → sentence index in the submission (several sets each restart at 1)
+  if (!p.multi) return list.map(r => +r.s - 1);
+  const per = Math.max(...p.sentences.map(x => x.n || 1)), starts = p.sentences.map((x, i) => x.n === 1 ? i : -1).filter(i => i >= 0);
+  if (list.some(r => +r.s > per)) return list.map(r => +r.s - 1);      // numbered across the submission
+  let set = 0, prev = 0;
+  return list.map(r => { const n = +r.s; if (n < prev) set = Math.min(set + 1, starts.length - 1); prev = n; return starts[set] + n - 1; });
+}
 function rewriteHtml(m, list) {
-  const p = PROMPTS[m.pid], sp = parseText(m.text);
-  return p.sentences.map((x, i) => { const rows = STAGES.map(S => { const mine = (sp.find(y => y.i === i && y.k === S.k) || {}).t || '', r = list.find(y => +y.s === i + 1 && +y.stage === S.n); if (!mine.trim() || !r) return '';
+  const p = combo(m.pid), sp = parseText(m.text), at = rwIndex(p, list);
+  return p.sentences.map((x, i) => { const rows = STAGES.map(S => { const mine = (sp.find(y => y.i === i && y.k === S.k) || {}).t || '', r = list.find((y, j) => at[j] === i && +y.stage === S.n); if (!mine.trim() || !r) return '';
       return `<div class="rw-row">${stg(S.n, S.t, S.opt)}<p class="yours"><span class="lb">Yours</span>${esc(mine)}</p><p class="en rw-nat"><span class="lb">Natural</span>${esc(r.text)}</p>${r.why ? `<p class="rw-why">${esc(r.why)}</p>` : ''}</div>`; }).join('');
-    return rows ? `<div class="rw-s"><div class="lad-h">Sentence ${i + 1} · <span class="muted">${esc(x.base)}</span></div>${rows}</div>` : ''; }).join('') || '<p class="muted small">No rewrite came back for these sentences.</p>';
+    return rows ? `<div class="rw-s"><div class="lad-h">${x.set ? esc(x.set) + ' · ' : ''}Sentence ${x.n || i + 1} · <span class="muted">${esc(x.base)}</span></div>${rows}</div>` : ''; }).join('') || '<p class="muted small">No rewrite came back for these sentences.</p>';
 }
 function rewriteFallback(m, why) {
   return `<div class="note info"><span class="tag">Do it yourself</span><p>${esc(why || 'The automatic rewrite is not switched on for this class yet.')} Copy the ready-made prompt and paste it into ChatGPT or Gemini: it asks for natural versions of <b>your</b> sentences, keeping your ideas.</p></div>
@@ -1981,7 +2018,7 @@ function machineReview(text, p) {
   p.sentences.forEach((x, i) => {
     const baseW = wc(x.base), baseC = content(x.base).map(stem4);
     STAGES.forEach(S => {
-      const k = i + S.k, sp = by[k], t = sp ? sp.t.trim() : '', n = wc(t), lab = 'Sentence ' + (i + 1) + ' · Stage ' + S.n;
+      const k = i + S.k, sp = by[k], t = sp ? sp.t.trim() : '', n = wc(t), lab = (x.set ? x.set + ' · ' : '') + 'Sentence ' + (x.n || i + 1) + ' · Stage ' + S.n;
       if (!sp || !n) { if (S.opt) { bonusGoals.push({ k, ok: false, att: false }); return; } other.push({ c: 'TF', m: lab + ' is empty – write this stage.', f: '', p: 1 }); goals.push({ k, ok: false }); return; }
       const lead = sp.s + (sp.t.length - sp.t.trimStart().length), whole = [lead, lead + t.length];
       minorOnly = !!S.opt;
@@ -2016,11 +2053,12 @@ function machineReview(text, p) {
   const s3ok = goals.filter(g => g.k.endsWith('s3') && g.ok).length, s4ok = bonusGoals.filter(g => g.ok).length, s4att = bonusGoals.filter(g => g.att).length, s2ok = goals.filter(g => g.k.endsWith('s2') && g.ok).length;
   const bonus = { n: bonusGoals.length, att: s4att, met: s4ok };
   const gra = ann.filter(a => a.c === 'GRA' && a.p).length, sp = ann.filter(a => a.m === 'Spelling').length;
+  const K = Math.max(1, p.sentences.length / 2);      // per set of 2 sentences, so 3 sets in one submission are marked on the same scale as 1
   const bands = {
     TF: half(clamp(2 + 8 * okN / total, 0, 10)),
-    ORG: half(clamp(3 + 3.5 * s3ok - 1.5 * empty, 0, 10)),
-    VOC: half(clamp(6 + 0.75 * s4ok + 0.5 * s2ok - 0.5 * vague - 0.75 * over - 0.5 * sp - 0.5 * contr - 1.5 * empty, 0, 10)),
-    GRA: half(clamp(7.5 + 0.5 * s3ok - 0.75 * gra - 0.25 * mech - 1.5 * empty, 0, 10))
+    ORG: half(clamp(3 + (3.5 * s3ok - 1.5 * empty) / K, 0, 10)),
+    VOC: half(clamp(6 + (0.75 * s4ok + 0.5 * s2ok - 0.5 * vague - 0.75 * over - 0.5 * sp - 0.5 * contr - 1.5 * empty) / K, 0, 10)),
+    GRA: half(clamp(7.5 + (0.5 * s3ok - 0.75 * gra - 0.25 * mech - 1.5 * empty) / K, 0, 10))
   };
   const mark = half(CATS.reduce((a, c) => a + bands[c], 0) / 4);
   const miss = st2 => goals.concat(bonusGoals.filter(g => g.att)).filter(g => g.k.endsWith(st2) && !g.ok).length;
@@ -2072,8 +2110,11 @@ function essayHtml(text, st, onlyP, selKey) {      // the stored text stays exac
   const lines = text.split('\n');
   lines.forEach((line, li) => {
     const le = ls + line.length, nl = li < lines.length - 1 ? '\n' : '';
-    const mb = line.match(/^(\d+)\.\s*Base:\s*/), ms = line.match(/^Stage (\d):\s*/);
-    if (mb) {
+    const mb = line.match(/^(\d+)\.\s*Base:\s*/), ms = line.match(/^Stage (\d):\s*/), mset = line.match(/^Set ([A-Z]\d+) · /);
+    if (mset) {                    // a submission with several sets: a heading line before each set
+      if (open) { html += '</div>'; open = false; }
+      html += `<div class="es-set">${seg(ls, le)}${nl}</div>`;
+    } else if (mb) {
       if (open) html += '</div>';
       html += `<div class="es-grp" data-h="Sentence ${mb[1]}">`; open = true;
       html += `<div class="es-row es-st1"><span class="es-pre" data-l="Stage 1 · Basic">${seg(ls, ls + mb[0].length)}</span>${seg(ls + mb[0].length, le)}${nl}</div>`;
@@ -2108,9 +2149,9 @@ function renderReview() {
   const sc = c => `<div class="sc ${c}"><span class="lb"><i></i>${CAT[c]}</span><div class="v">${edit ? `<b>${f1(st.bands[c])}</b><span class="st"><button type="button" data-band="${c}" data-d="0.5" aria-label="up">▲</button><button type="button" data-band="${c}" data-d="-0.5" aria-label="down">▼</button></span>` : `<b>${f1(st.bands[c])}</b>`}</div><small>/ 10</small></div>`;
   const list = (k, lab, cls, icon) => `<div class="sbox ${cls}"><h5>${icon} ${lab}${edit ? ' <span class="muted small" style="margin-left:auto">one per line</span>' : ''}</h5>${edit ? `<textarea data-f="${k}" rows="5" style="min-height:110px">${esc(st[k].join('\n'))}</textarea>` : (st[k].length ? `<ul>${st[k].map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted small">—</p>')}</div>`;
   const left = `<div class="rv-card rv-left">
-      <div class="rv-h"><h4>Student's sentences</h4><span class="chip p">${esc(p.id)} · ${esc(p.topic)}</span></div>
-      <div class="who"><span class="av">${esc(initials)}</span><span class="nm">${esc(R.who.name)}<small>${esc(R.who.sid || '')}</small></span><span><small>Set</small>${esc(p.id + ' · ' + p.topic)}</span><span><small>Submitted</small>${fmtDate(R.who.submittedAt)}</span></div>
-      <details style="margin-top:10px"><summary class="small" style="cursor:pointer;color:var(--purple-ink);font-weight:700">Show the set</summary><div style="margin-top:8px">${setHtml(p)}</div></details>
+      <div class="rv-h"><h4>Student's sentences</h4><span class="chip p wrap-chip">${esc(pLabel(p))}</span></div>
+      <div class="who"><span class="av">${esc(initials)}</span><span class="nm">${esc(R.who.name)}<small>${esc(R.who.sid || '')}</small></span><span><small>${p.multi ? p.ids.length + ' sets' : 'Set'}</small>${esc(pLabel(p))}</span><span><small>Submitted</small>${fmtDate(R.who.submittedAt)}</span></div>
+      <details style="margin-top:10px"><summary class="small" style="cursor:pointer;color:var(--purple-ink);font-weight:700">Show the set${p.multi ? 's' : ''}</summary><div style="margin-top:8px">${setsHtml(p)}</div></details>
       <div class="essay staged" id="rv-essay">${essayHtml(text, st, R.onlyP, R.sel)}</div>
       <div class="legend-c">${CATS.map(c => `<span class="${c}">${CAT[c]}</span>`).join('')}${edit ? '<span class="muted">· select words in the text to add an issue</span>' : ''}</div>
       <div class="rv-foot"><span>Words: <b>${wc(text)}</b></span><span class="row">Show <span class="seg-t"><button type="button" data-only="0" class="${R.onlyP ? '' : 'on'}">All issues (${nAll})</button><button type="button" data-only="1" class="${R.onlyP ? 'on' : ''}">Main only (${nP})</button></span></span></div>
@@ -2133,7 +2174,7 @@ function renderReview() {
     </div>`;
   $('#rv-body').innerHTML = `<div class="rv-tabs"><button type="button" data-rvtab="essay" class="${R.tab !== 'marks' ? 'on' : ''}">Sentences</button><button type="button" data-rvtab="marks" class="${R.tab === 'marks' ? 'on' : ''}">Marks &amp; comments</button></div><div class="rv" data-tab="${R.tab || 'essay'}">${left}${right}</div>`;
   if (edit) { releaseBtn(); if (R.sel) openEditor(R.sel); }
-  if (R.mode === 'machine') { const m = mineList().find(x => x.clientId === R.key); if (m) setSendNote(R.key, !m.pending); }
+  if (R.mode === 'machine') { const m = mineSubs().find(x => x.cids.includes(R.key)); if (m) setSendNote(R.key, !m.pending); }
 }
 function paintEssay() { $('#rv-essay').innerHTML = essayHtml(RV.text, RV.st, RV.onlyP, RV.sel); $('#rv-issues').innerHTML = issuesHtml(RV.st, RV.onlyP, RV.sel); const L = orderIssues(RV.st); $('.seg-t [data-only="0"]').textContent = 'All issues (' + L.length + ')'; $('.seg-t [data-only="1"]').textContent = 'Main only (' + L.filter(x => x.a.p).length + ')'; }
 function paintMark() { const m = half(CATS.reduce((a, c) => a + (+RV.st.bands[c] || 0), 0) / 4); $('#rv-mark').textContent = f1(m); $('#rv-mark').nextElementSibling.textContent = '/ 10 · ' + lvl(m); }
@@ -2143,10 +2184,10 @@ $('#rv-close').addEventListener('click', async () => { if (RV && RV.mode === 'te
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#rv-modal').hidden && $('#ask-modal').hidden) $('#rv-close').click(); });
 
 function openMachine(m) {
-  const p = PROMPTS[m.pid]; if (!p) return;
+  const p = combo(m.pid); if (!p) return;
   const mr = machineReview(m.text, p);
   RV = { mode: 'machine', text: m.text, p, st: mr, who: { name: m.name, sid: m.sid, submittedAt: m.submittedAt }, key: m.clientId, onlyP: false, sel: '' };
-  openModal('Machine check · ' + p.id, 'An automatic first check of your sentences. Your teacher will review it and release the official marks.', `Required stage goals: <b>${m.correct}/${m.total}</b><br>Stage 4 bonus: ${mr.bonus.att}/${mr.bonus.n} attempted · ${mr.bonus.met} met`);
+  openModal('Machine check · ' + pIds(p).join(' · '), 'An automatic first check of your sentences. Your teacher will review it and release the official marks.', `Required stage goals: <b>${m.correct}/${m.total}</b><br>Stage 4 bonus: ${mr.bonus.att}/${mr.bonus.n} attempted · ${mr.bonus.met} met`);
   renderReview();
 }
 
@@ -2164,7 +2205,7 @@ function packFeedback(st) {
 }
 function draftKey(r) { return 'draft:' + r.clientId + '|' + r.submittedAt; }
 function openTeacher(r) {
-  const meta = (r.answers || [])[0] || {}, p = PROMPTS[meta.p || r.assign]; if (!p) { alert('Unknown prompt for this attempt.'); return; }
+  const p = combo(r.pid); if (!p) { alert('Unknown prompt for this attempt.'); return; }
   const text = (r.writing && r.writing.W1) || '', g = r.grading || {};
   const server = g.gradedAt ? stFromFeedback((g.feedback || {}).W1, (g.feedback || {}).general) : null;
   const draft = store.get(draftKey(r), null);
@@ -2174,7 +2215,7 @@ function openTeacher(r) {
   else { const mr = machineReview(text, p); st = { bands: mr.bands, comment: mr.comment, strengths: mr.strengths, improve: mr.improve, lesson: mr.lesson, ann: mr.ann, other: mr.other, gate: [] }; src = 'Machine check (not saved yet)'; }
   st.gate = st.gate || [];
   RV = { mode: 'teacher', text, p, st, who: { name: r.name, sid: r.sid, submittedAt: r.submittedAt }, row: r, onlyP: false, sel: '', dirty: false };
-  openModal('Review & mark', 'Check the machine analysis, adjust the marks and comments, then release them to the student.', `<div id="rv-src">${esc(src)}</div><div class="saved-at" id="rv-saved"></div><div>Required stage goals: <b>${r.correct}/${r.total}</b> · ${mmss(r.timeSec)}</div><div>${bonusTxt(r)}</div><div id="rv-doclink"></div>`);
+  openModal('Review & mark', 'Check the machine analysis, adjust the marks and comments, then release them to the student.', `<div id="rv-src">${esc(src)}</div><div class="saved-at" id="rv-saved"></div><div>Required stage goals: <b>${r.correct}/${r.total}</b> · ${mmss(r.timeSec)}</div><div>${bonusTxt(r)}</div>${r.rows ? `<div>Sent as ${r.rows.length} rows (one per set, before 28/10): marks, comments and release apply to all of them.</div>` : ''}${r.gmixed ? '<div class="warn-t">⚠ These rows were marked differently: this shows the least advanced one. Saving writes the same marks to every row.</div>' : ''}<div id="rv-doclink"></div>`);
   renderReview(); docLink(g.docUrl);
 }
 function bonusTxt(r) { const o = (r.answers || []).filter(a => a && a.opt); if (!o.length) return ''; return 'Stage 4 bonus (optional): ' + o.filter(a => a.w).length + '/' + o.length + ' attempted · ' + o.filter(a => a.ok).length + ' met'; }
@@ -2258,10 +2299,24 @@ function gradePayload(row = RV.row, st = RV.st) {
   CATS.forEach(c => { crit[CRIT_KEY[c]] = Math.round(st.bands[c] / 4 * 4) / 4; });
   return { clientId: row.clientId, submittedAt: row.submittedAt, marks: { W1: mark }, criteria: { W1: crit }, feedback: { W1: packFeedback(st), general: st.comment } };
 }
+/* a sitting saved as one row per set: the same action on each of its rows in turn ("busy" → wait and try again);
+   a failure stops with the rows before it done, so pressing the button again finishes the rest */
+async function eachRow(r, fn, say) {
+  const rows = r.rows || [r]; let last = null;
+  for (let i = 0; i < rows.length; i++) {
+    if (say && rows.length > 1) say(i, rows.length);
+    let j = null;
+    for (let t = 0; t < 3; t++) { try { j = await fn(rows[i]); } catch (e) { j = { ok: false, error: e.message || 'network' }; } if (j && j.ok) break; if (!/busy|network|fetch|time/i.test(String(j && j.error))) break; await new Promise(res => setTimeout(res, 1500 * (t + 1))); }
+    if (!j || !j.ok) throw new Error(String((j && j.error) || 'error') + (rows.length > 1 ? ` (row ${i + 1} of ${rows.length}${i ? '; the rows before it are done – press again to finish' : ''})` : ''));
+    if (j.grading) rows[i].grading = j.grading; last = j;
+  }
+  if (r.rows) syncGroup(r); else if (last && last.grading) r.grading = last.grading;
+  return last;
+}
 async function teacherSave(quiet) {
   const r = RV.row; rvStatus('Saving to the class sheet…');
-  try { const j = await api('grade', gradePayload()); if (!j.ok) throw new Error(j.error); r.grading = j.grading; store.del(draftKey(r)); RV.dirty = false; renderSubs(); releaseBtn();
-    $('#rv-src').textContent = 'Saved by ' + (j.grading.gradedBy || A.name) + ' · ' + fmtDate(j.grading.gradedAt); if (!quiet) rvStatus('Saved. ' + (j.grading.released ? 'The student sees the new version.' : 'Not released yet.'), 'ok'); return true; }
+  try { const j = await eachRow(r, row => api('grade', gradePayload(row)), (i, n) => rvStatus(`Saving to the class sheet… row ${i + 1} of ${n}`)); store.del(draftKey(r)); RV.dirty = false; renderSubs(); releaseBtn();
+    $('#rv-src').textContent = 'Saved by ' + (j.grading.gradedBy || A.name) + ' · ' + fmtDate(j.grading.gradedAt) + (r.rows ? ' · all ' + r.rows.length + ' rows' : ''); if (!quiet) rvStatus('Saved. ' + (j.grading.released ? 'The student sees the new version.' : 'Not released yet.'), 'ok'); return true; }
   catch (e) { rvStatus('Could not save: ' + (e.message || 'error') + ' – your draft is kept on this device.', 'err'); return false; }
 }
 async function teacherRelease() {
@@ -2269,7 +2324,7 @@ async function teacherRelease() {
   if (on && !(await teacherSave(true))) return;
   if (!(await ask(on ? `Release the marks and comments to ${r.name}? They will see them in My results on the device they used.` : `Withdraw the marks and comments from ${r.name}?`, on ? 'Release' : 'Withdraw'))) return;
   rvStatus(on ? 'Releasing…' : 'Withdrawing…');
-  try { const j = await api('release', { clientId: r.clientId, submittedAt: r.submittedAt, release: on }); if (!j.ok) throw new Error(j.error); r.grading = j.grading; renderSubs(); releaseBtn(); rvStatus(on ? 'Released to the student. ' + (j.warning || '') : 'Withdrawn: the student no longer sees it.', 'ok'); }
+  try { const j = await eachRow(r, row => api('release', { clientId: row.clientId, submittedAt: row.submittedAt, release: on }), (i, n) => rvStatus(`${on ? 'Releasing' : 'Withdrawing'}… row ${i + 1} of ${n}`)); renderSubs(); releaseBtn(); rvStatus(on ? 'Released to the student. ' + (j.warning || '') : 'Withdrawn: the student no longer sees it.', 'ok'); }
   catch (e) { rvStatus('Could not change: ' + (e.message || 'error'), 'err'); }
 }
 const AI_CAT = { grammar: 'GRA', spelling: 'VOC', vocabulary: 'VOC', register: 'VOC', organization: 'ORG', task: 'TF' };
@@ -2281,11 +2336,12 @@ function findQuote(text, q, taken) {       // exact → case-insensitive → whi
   if (!tries.length) { const pat = q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/['’‘]/g, "['’‘]").replace(/\s+/g, '\\s+'); try { const re = new RegExp(pat, 'gi'); let m; while ((m = re.exec(text))) tries.push([m.index, m.index + m[0].length]); } catch (e) {} }
   return tries.find(([a, b]) => !taken.some(t => a < t.e && b > t.s)) || null;
 }
-function addAiIssues(list, text = RV.text, st = RV.st) {
+function addAiIssues(list, text = RV.text, st = RV.st, range) {      // range: [start, end] of the set the AI looked at (a sitting saved as one row per set)
   let placed = 0, general = 0, dup = 0;
+  const off = range ? range[0] : 0, area = range ? text.slice(range[0], range[1]) : text;
   (list || []).forEach(x => {
     const c = AI_CAT[x.type] || 'GRA', m = ((AI_LAB[x.type] || 'Grammar') + ': ' + (x.message || '')).slice(0, 180), f = String(x.fix || '').slice(0, 80);
-    const hit = findQuote(text, String(x.quote || ''), []);
+    const h0 = findQuote(area, String(x.quote || ''), []), hit = h0 && [h0[0] + off, h0[1] + off];
     if (hit) {
       const [s0, e0] = hit, over = st.ann.find(a => s0 < a.e && e0 > a.s);
       if (over) { dup++; if (!over.ai && f && !over.f) over.f = f; return; }   // the machine check already marks this spot
@@ -2295,18 +2351,37 @@ function addAiIssues(list, text = RV.text, st = RV.st) {
   st.ann.sort((a, b) => a.s - b.s);
   return { placed, general, dup };
 }
-const aiReq = (r, p) => ({ clientId: r.clientId, submittedAt: r.submittedAt, context: { issues: true, W1: { situation: 'Sentence upgrade practice: the student rewrites ' + p.sentences.length + ' base sentences through Stage 2 (details: who/what/where/when/how much, REQUIRED), Stage 3 (+ a reason or result clause, REQUIRED) and Stage 4 (academic: nominalised subject + hedging + collocations, OPTIONAL – never penalise a missing Stage 4; give extra credit for a good one in vocabulary). Base sentences: ' + p.sentences.map((x, i) => (i + 1) + '. ' + x.base).join(' '), set: [], instruction: 'Grade how well each stage meets its goal; task = required stage goals (2 and 3) met, organization = logical clause links, vocabulary = precise/academic word choice and collocations, grammar = accuracy. Quote errors exactly as written in the student lines.', points: p.sentences.flatMap((x, i) => STAGES.map(S => 'Sentence ' + (i + 1) + ' Stage ' + S.n + ' (' + S.t + (S.opt ? ', optional' : ', required') + ')')), minWords: 40 } } });
+const aiReq = (r, p) => ({ clientId: r.clientId, submittedAt: r.submittedAt, context: { issues: true, W1: { situation: 'Sentence upgrade practice: the student rewrites ' + p.sentences.length + ' base sentences through Stage 2 (details: who/what/where/when/how much, REQUIRED), Stage 3 (+ a reason or result clause, REQUIRED) and Stage 4 (academic: nominalised subject + hedging + collocations, OPTIONAL – never penalise a missing Stage 4; give extra credit for a good one in vocabulary). Base sentences: ' + p.sentences.map((x, i) => (x.set ? 'Set ' + x.set + ' sentence ' + x.n : i + 1) + '. ' + x.base).join(' ') + (p.multi ? ' The text has one block per set ("Set A1 · …"), and each set numbers its sentences from 1.' : ''), set: [], instruction: 'Grade how well each stage meets its goal; task = required stage goals (2 and 3) met, organization = logical clause links, vocabulary = precise/academic word choice and collocations, grammar = accuracy. Quote errors exactly as written in the student lines.', points: p.sentences.flatMap((x, i) => STAGES.map(S => (x.set ? 'Set ' + x.set + ' ' : '') + 'Sentence ' + (x.n || i + 1) + ' Stage ' + S.n + ' (' + S.t + (S.opt ? ', optional' : ', required') + ')')), minWords: 40 } } });
+/* the AI reads the text saved in the row: a sitting saved as one row per set (before 28/10) is asked set by set and the answers are merged */
+async function aiAsk(r, p, text, retry) {
+  const parts = r.parts || [{ row: r, pid: p.id, s: 0, e: text.length }], got = [];
+  for (const x of parts) {
+    const P = r.parts ? PROMPTS[x.pid] : p; let j = null;
+    for (let t = 0; t < 3; t++) {                      // the free AI quota answers "busy" now and then: wait and try again (batch only)
+      j = await api('ai_grade', aiReq(x.row, P));
+      if (j.ok || !retry || !/429|503|quá tải|busy|quota/i.test(j.error || '')) break;
+      await new Promise(res => setTimeout(res, 20000 * (t + 1)));
+      if (!BATCH) return 'stopped';
+    }
+    if (!j.ok) throw new Error((j.error || 'AI error') + (parts.length > 1 ? ' (set ' + x.pid + ')' : ''));
+    const a = j.ai && j.ai.W1; if (!a) throw new Error('no AI result'); got.push({ a, x });
+  }
+  const crit = {}; CATS.forEach(c => { const v = got.map(g => g.a.criteria && g.a.criteria[CRIT_KEY[c]]).filter(v => typeof v === 'number'); if (v.length) crit[CRIT_KEY[c]] = v.reduce((m, y) => m + y, 0) / v.length; });
+  const band = Math.round(got.reduce((m, g) => m + (+g.a.band || 0), 0) / got.length * 2) / 2;
+  const note = got.length > 1 ? got.map(g => g.x.pid + ': ' + (g.a.note || '')).join(' ') : (got[0].a.note || '');
+  return { band, note, criteria: crit, lists: got.map(g => ({ issues: g.a.issues, range: r.parts ? [g.x.s, g.x.e] : null })) };
+}
+function addAiLists(lists, text, st) { const t = { placed: 0, general: 0, dup: 0 }; lists.forEach(L => { if (!Array.isArray(L.issues)) return; const x = addAiIssues(L.issues, text, st, L.range); t.placed += x.placed; t.general += x.general; t.dup += x.dup; }); return lists.some(L => Array.isArray(L.issues)) ? t : null; }
 async function teacherAi() {
-  const r = RV.row, p = RV.p, btn = $('#rv-ai'); btn.disabled = true; rvStatus('Asking the AI for marks and a list of errors… (up to about 30 seconds)');
+  const r = RV.row, p = RV.p, btn = $('#rv-ai'); btn.disabled = true; rvStatus('Asking the AI for marks and a list of errors… (up to about 30 seconds' + (r.parts ? ' per set' : '') + ')');
   try {
-    const j = await api('ai_grade', aiReq(r, p));
-    if (!j.ok) throw new Error(j.error); const a = j.ai && j.ai.W1; if (!a) throw new Error('no result');
-    CATS.forEach(c => { const v = a.criteria && a.criteria[CRIT_KEY[c]]; if (typeof v === 'number') RV.st.bands[c] = clamp(half(v * 4), 0, 10); });
+    const a = await aiAsk(r, p, RV.text, false);
+    CATS.forEach(c => { const v = a.criteria[CRIT_KEY[c]]; if (typeof v === 'number') RV.st.bands[c] = clamp(half(v * 4), 0, 10); });
     const note = '[AI suggestion · band ' + a.band + '/10] ' + a.note;
     if (!RV.st.comment.trim() || await ask('Replace the overall comment with the AI note?', 'Replace')) RV.st.comment = note.slice(0, 500);
     const had = RV.st.ann.some(x => x.ai) || RV.st.other.some(x => x.ai);
-    if (had && Array.isArray(a.issues) && await ask('Remove the AI errors added last time before adding the new list?', 'Replace them')) { RV.st.ann = RV.st.ann.filter(x => !x.ai); RV.st.other = RV.st.other.filter(x => !x.ai); }
-    const res = Array.isArray(a.issues) ? addAiIssues(a.issues) : null;
+    if (had && a.lists.some(L => Array.isArray(L.issues)) && await ask('Remove the AI errors added last time before adding the new list?', 'Replace them')) { RV.st.ann = RV.st.ann.filter(x => !x.ai); RV.st.other = RV.st.other.filter(x => !x.ai); }
+    const res = addAiLists(a.lists, RV.text, RV.st);
     renderReview(); touched();
     rvStatus(res ? `AI filled in the 4 marks and the comment, and marked ${res.placed} error${res.placed === 1 ? '' : 's'} in the text` + (res.general ? `, ${res.general} more listed below the text (words not found exactly)` : '') + (res.dup ? `; ${res.dup} already marked by the machine check` : '') + ' – check them, then Save draft or Approve & release.' : 'AI suggestion filled in – check it, then Save draft or Approve & release.', 'ok');
   } catch (e) { rvStatus('AI suggestion not available: ' + (e.message || 'error'), 'err'); }
@@ -2314,37 +2389,29 @@ async function teacherAi() {
 }
 /* ---------- AI draft for many sets at once (Admin tab): machine check + AI marks/comment/errors, saved as a DRAFT, never released ---------- */
 let BATCH = null;
-function batchTargets() { return filteredSubs().filter(r => gstate(r) === 'new' && !store.get(draftKey(r), null)); }
+function batchTargets() { return filteredSubs().filter(r => gstate(r) === 'new' && !r.gmixed && !store.get(draftKey(r), null)); }   // a sitting with some rows already marked is left to the teacher
 function batchBtn() {
   const b = $('#btn-ai-all'); if (!b) return;
   if (BATCH) { b.textContent = '■ Stop AI drafting'; b.disabled = false; return; }
   const n = batchTargets().length; b.textContent = '✦ AI draft all (' + n + ')'; b.disabled = !n;
-  b.title = n ? 'Let the AI mark every not-marked set in the current filter and save each one as a draft (nothing is released)' : 'No not-marked sets in the current filter';
+  b.title = n ? 'Let the AI mark every not-marked submission in the current filter and save each one as a draft (nothing is released)' : 'No not-marked submissions in the current filter';
 }
 async function aiDraftOne(r) {
-  const meta = (r.answers || [])[0] || {}, p = PROMPTS[meta.p || r.assign]; if (!p) throw new Error('unknown prompt');
+  const p = combo(r.pid); if (!p) throw new Error('unknown prompt');
   const text = (r.writing && r.writing.W1) || '', mr = machineReview(text, p);
   const st = { bands: mr.bands, comment: mr.comment, strengths: mr.strengths, improve: mr.improve, lesson: mr.lesson, ann: mr.ann, other: mr.other, gate: [] };
-  let j = null;
-  for (let t = 0; t < 3; t++) {                      // the free AI quota answers "busy" now and then: wait and try again
-    j = await api('ai_grade', aiReq(r, p));
-    if (j.ok || !/429|503|quá tải|busy|quota/i.test(j.error || '')) break;
-    await new Promise(res => setTimeout(res, 20000 * (t + 1)));
-    if (!BATCH) return 'stopped';
-  }
-  if (!j.ok) throw new Error(j.error || 'AI error');
-  const a = j.ai && j.ai.W1; if (!a) throw new Error('no AI result');
-  CATS.forEach(c => { const v = a.criteria && a.criteria[CRIT_KEY[c]]; if (typeof v === 'number') st.bands[c] = clamp(half(v * 4), 0, 10); });
+  const a = await aiAsk(r, p, text, true); if (a === 'stopped') return 'stopped';
+  CATS.forEach(c => { const v = a.criteria[CRIT_KEY[c]]; if (typeof v === 'number') st.bands[c] = clamp(half(v * 4), 0, 10); });
   st.comment = ('[AI draft · band ' + a.band + '/10] ' + (a.note || '')).slice(0, 500);
-  const res = Array.isArray(a.issues) ? addAiIssues(a.issues, text, st) : { placed: 0, general: 0 };
-  const g = await api('grade', gradePayload(r, st)); if (!g.ok) throw new Error(g.error || 'save failed');
-  r.grading = g.grading; return res.placed + res.general;
+  const res = addAiLists(a.lists, text, st) || { placed: 0, general: 0 };
+  await eachRow(r, row => api('grade', gradePayload(row, st)));
+  return res.placed + res.general;
 }
 async function aiDraftAll() {
   if (BATCH) { BATCH.stop = true; BATCH = null; batchBtn(); return; }
   const L = batchTargets(); if (!L.length) return;
   const mins = Math.ceil(L.length * 12 / 60);
-  if (!(await ask(`Let the AI draft marks, a comment and an error list for ${L.length} not-marked set${L.length === 1 ? '' : 's'} in the current filter? Each one is saved as a DRAFT – nothing is released to students. Takes about ${mins} minute${mins === 1 ? '' : 's'}; keep this tab open. Sets you have already started on this device are skipped.`, 'Start'))) return;
+  if (!(await ask(`Let the AI draft marks, a comment and an error list for ${L.length} not-marked submission${L.length === 1 ? '' : 's'} in the current filter? Each one is saved as a DRAFT – nothing is released to students. Takes about ${mins} minute${mins === 1 ? '' : 's'}; keep this tab open. Submissions you have already started on this device are skipped.`, 'Start'))) return;
   BATCH = { stop: false }; const me = BATCH; batchBtn();
   let ok = 0, fail = 0, iss = 0; const errs = [];
   for (let i = 0; i < L.length; i++) {
@@ -2363,26 +2430,46 @@ async function teacherDoc() {
   if (!(await teacherSave(true))) return;
   const r = RV.row, st = RV.st, p = RV.p, g = r.grading || {};
   const L = orderIssues(st), rows = [['#', 'Criterion', 'Text', 'Comment', 'Correction']].concat(L.map(x => [String(x.n), CAT[x.a.c], x.kind === 'a' ? x.a.q : '—', x.a.m, x.a.f || '']));
-  const blocks = [{ type: 'h1', text: document.title + ' · ' + p.id }, { type: 'p', text: 'Student: ' + r.name + ' · ' + r.sid + '\nSubmitted: ' + fmtDate(r.submittedAt) + ' · Marked by ' + (g.gradedBy || A.name) },
+  const blocks = [{ type: 'h1', text: document.title + ' · ' + pIds(p).join(' · ') }, { type: 'p', text: 'Student: ' + r.name + ' · ' + r.sid + '\nSubmitted: ' + fmtDate(r.submittedAt) + ' · Marked by ' + (g.gradedBy || A.name) },
     { type: 'table', rows: [['Criterion', 'Band /10']].concat(CATS.map(c => [CAT[c], f1(st.bands[c])])).concat([['Mark', f1(g.overall)]]) },
     { type: 'h2', text: 'Overall comment' }, { type: 'p', text: st.comment || '—' },
     { type: 'h2', text: 'Strengths' }, { type: 'p', text: st.strengths.map(x => '• ' + x).join('\n') || '—' },
     { type: 'h2', text: 'Priorities to improve' }, { type: 'p', text: st.improve.map(x => '• ' + x).join('\n') || '—' },
     { type: 'h2', text: 'Issues in your sentences' }, { type: 'table', rows: rows.slice(0, 40) },
     { type: 'h2', text: 'Suggested lesson' }, { type: 'p', text: LESSONS[st.lesson][0] + ' – ' + LESSONS[st.lesson][1] },
-    { type: 'h2', text: 'The base sentences' }, { type: 'note', text: p.sentences.map((x, i) => (i + 1) + '. ' + x.base).join('\n') },
+    { type: 'h2', text: 'The base sentences' }, { type: 'note', text: p.sentences.map((x, i) => (x.set ? x.set + ' · ' + x.n : i + 1) + '. ' + x.base).join('\n') },
     { type: 'h2', text: 'Your sentences' }, { type: 'quote', text: RV.text }];
-  const base = { clientId: r.clientId, submittedAt: r.submittedAt, title: r.name + ' – ' + r.sid + ' – Sentence upgrade ' + p.id, blocks };
+  const dr = r.rows ? r.rows[0] : r;           // a sitting saved as one row per set keeps its one Doc on the first row
+  const base = { clientId: dr.clientId, submittedAt: dr.submittedAt, title: r.name + ' – ' + r.sid + ' – Sentence upgrade ' + pIds(p).join(' '), blocks };
   rvStatus('Writing the Google Doc…');
   try { let j = await api('make_doc', base); if (!j.ok) throw new Error(j.error);
     if (j.existed) { if (!(await ask('Update the Google Doc from this page? Anything typed directly into the Doc will be replaced.', 'Update the Doc'))) { rvStatus(''); return; } j = await api('make_doc', Object.assign({ overwrite: true }, base)); if (!j.ok) throw new Error(j.error); }
-    r.grading = j.grading; rvStatus('Google Doc ready – the link is at the top right.', 'ok'); docLink(r.grading.docUrl); }
+    dr.grading = j.grading; if (r.rows) syncGroup(r); else r.grading = j.grading; rvStatus('Google Doc ready – the link is at the top right.', 'ok'); docLink(r.grading.docUrl); }
   catch (e) { rvStatus('Could not make the Doc: ' + (e.message || 'error'), 'err'); }
 }
 
 /* ====================== MY RESULTS ====================== */
 const FB = {};      // clientId -> released item (this session, after the name check)
 let FB_WHO = '';
+/* one line per submission. Before 28/10 a class sitting was sent as one row per set: those rows (same name and class,
+   one set each, sent within 2 minutes) are shown together as ONE submission, in set order A → C */
+const LEGACY_GAP = 120000;
+function mineSubs() {
+  const out = [];
+  mineList().slice().sort((a, b) => String(a.submittedAt).localeCompare(String(b.submittedAt))).forEach(m => {
+    const old = !m.v && pidsOf(m.pid).length === 1, g = out[out.length - 1];
+    if (old && g && g.old && norm(g.parts[0].name) === norm(m.name) && normClass(g.parts[0].sid) === normClass(m.sid) && !g.ids.includes(m.pid) && Date.parse(m.submittedAt) - Date.parse(g.parts[0].submittedAt) <= LEGACY_GAP) { g.parts.push(m); g.ids.push(m.pid); return; }
+    out.push({ old, parts: [m], ids: pidsOf(m.pid) });
+  });
+  return out.map(g => {
+    if (g.parts.length === 1) return Object.assign({}, g.parts[0], { cids: [g.parts[0].clientId], parts: g.parts });
+    const ids = ORDER.filter(id => g.ids.includes(id)), parts = ids.map(id => g.parts.find(x => x.pid === id)), sum = k => parts.reduce((a, x) => a + (+x[k] || 0), 0);
+    const bs = k => parts.reduce((a, x) => a + (+(x.bonus || {})[k] || 0), 0);
+    return Object.assign({}, g.parts[0], { clientId: parts[0].clientId, cids: parts.map(x => x.clientId), parts, pid: ids.join(','), text: joinTexts(ids, parts.map(x => x.text)),
+      words: sum('words'), correct: sum('correct'), total: sum('total'), bonus: { n: bs('n'), att: bs('att'), met: bs('met') }, pending: parts.some(x => x.pending), submittedAt: g.parts[0].submittedAt });
+  });
+}
+const subFb = m => { const f = m.cids.map(c => FB[c]); return f.every(Boolean) ? f[0] : null; };   // released only when every row of the submission is
 async function fetchFb(list) { const j = await api('feedback', { keys: list.slice(-10).map(m => m.clientId + '.' + m.token).join(',') }); return j && j.ok ? (j.items || []) : []; }
 function fbSay(msg, kind) { const s = $('#fb-status'); s.hidden = !msg; s.className = 'status' + (kind ? ' ' + kind : ''); s.lastElementChild.textContent = msg || ''; }
 async function openFeedback() {
@@ -2391,7 +2478,7 @@ async function openFeedback() {
   fbSay('Checking…');
   try { const items = []; for (let i = 0; i < mine.length; i += 10) items.push(...await fetchFb(mine.slice(i, i + 10)));
     Object.keys(FB).forEach(k => delete FB[k]); items.filter(x => x.released).forEach(x => { FB[x.clientId] = x; }); FB_WHO = who;
-    const n = Object.keys(FB).length; fbSay(n ? `Feedback released for ${n} set${n > 1 ? 's' : ''}. Open it in the table below.` : 'Your teacher has not released feedback yet.', n ? 'ok' : '');
+    const n = mineSubs().filter(m => norm(m.name) === who && subFb(m)).length; fbSay(n ? `Feedback released for ${n} submission${n > 1 ? 's' : ''}. Open it in the table below.` : 'Your teacher has not released feedback yet.', n ? 'ok' : '');
     $('#btn-fb-hide').hidden = false; renderMine(); renderPicker(); }
   catch (e) { fbSay('Could not reach the class sheet. Try again later.', 'err'); }
 }
@@ -2399,16 +2486,16 @@ $('#btn-fb-open').addEventListener('click', openFeedback);
 $('#fb-name').addEventListener('keydown', e => { if (e.key === 'Enter') openFeedback(); });
 $('#btn-fb-hide').addEventListener('click', () => { Object.keys(FB).forEach(k => delete FB[k]); FB_WHO = ''; $('#fb-name').value = ''; $('#btn-fb-hide').hidden = true; fbSay(''); renderMine(); renderPicker(); });
 function renderMine() {
-  const L = mineList().slice().sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)), tb = $('#mine-tbl tbody');
-  tb.innerHTML = L.length ? L.map(m => { const f = FB[m.clientId], p = PROMPTS[m.pid] || { title: '' };
-    return `<tr><td>${fmtDate(m.submittedAt)}${m.pending ? ' <span class="att">not sent</span>' : ''}</td><td class="wrap">${esc(m.pid)} · ${esc(p.title)}</td><td>${esc(m.name)}<br><span class="muted small">${esc(m.sid)}</span></td><td class="n">${m.correct}/${m.total}${m.bonus && m.bonus.att ? `<br><span class="muted small">+ Stage 4: ${m.bonus.met}/${m.bonus.att}</span>` : ''}</td><td class="n">${m.words}</td><td><button class="btn small" data-machine="${esc(m.clientId)}">Open</button></td><td>${f ? `<b>${f1(f.overall)}</b>/10 <button class="btn primary small" data-fbopen="${esc(m.clientId)}">Open review</button>` : `<span class="muted small">${FB_WHO && norm(m.name) === FB_WHO ? 'not released yet' : 'type your name above'}</span>`}</td><td></td></tr>`; }).join('') : '<tr><td colspan="8" class="empty">No sets submitted on this device yet.</td></tr>';
+  const L = mineSubs().sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt))), tb = $('#mine-tbl tbody');
+  tb.innerHTML = L.length ? L.map(m => { const f = subFb(m), p = combo(m.pid);
+    return `<tr><td>${fmtDate(m.submittedAt)}${m.pending ? ' <span class="att">not sent</span>' : ''}</td><td class="wrap set-cell">${esc(p ? pLabel(p) : m.pid)}</td><td>${esc(m.name)}<br><span class="muted small">${esc(m.sid)}</span></td><td class="n">${m.correct}/${m.total}${m.bonus && m.bonus.att ? `<br><span class="muted small">+ Stage 4: ${m.bonus.met}/${m.bonus.att}</span>` : ''}</td><td class="n">${m.words}</td><td><button class="btn small" data-machine="${esc(m.clientId)}">Open</button></td><td>${f ? `<b>${f1(f.overall)}</b>/10 <button class="btn primary small" data-fbopen="${esc(m.clientId)}">Open review</button>` : `<span class="muted small">${FB_WHO && norm(m.name) === FB_WHO ? 'not released yet' : 'type your name above'}</span>`}</td><td></td></tr>`; }).join('') : '<tr><td colspan="8" class="empty">Nothing submitted on this device yet.</td></tr>';
 }
 $('#mine-tbl').addEventListener('click', e => {
-  const b = e.target.closest('[data-fbopen]'); if (!b) return; const m = mineList().find(x => x.clientId === b.dataset.fbopen), f = FB[b.dataset.fbopen]; if (!m || !f) return;
-  const p = PROMPTS[m.pid], st = stFromFeedback((f.feedback || {}).W1, (f.feedback || {}).general);
+  const b = e.target.closest('[data-fbopen]'); if (!b) return; const m = mineSubs().find(x => x.cids.includes(b.dataset.fbopen)), f = m && subFb(m); if (!m || !f) return;
+  const p = combo(m.pid), st = stFromFeedback((f.feedback || {}).W1, (f.feedback || {}).general);
   if (!st) { alert('The teacher released a mark without the detailed review: ' + f1(f.overall) + '/10.'); return; }
   RV = { mode: 'student', text: m.text, p, st, who: { name: m.name, sid: m.sid, submittedAt: m.submittedAt }, key: m.clientId, onlyP: false, sel: '', releasedAt: f.releasedAt };
-  openModal('Teacher review · ' + p.id, p.title, f.docUrl ? `<a class="btn ghost small" href="${esc(f.docUrl)}" target="_blank" rel="noopener">Open in Google Docs</a>` : '');
+  openModal('Teacher review · ' + pIds(p).join(' · '), p.title, f.docUrl ? `<a class="btn ghost small" href="${esc(f.docUrl)}" target="_blank" rel="noopener">Open in Google Docs</a>` : '');
   renderReview();
 });
 /* "Clear this device": removes this browser's own copies (submitted sets, drafts, workspace) – nothing on the class sheet changes.
@@ -2423,21 +2510,58 @@ $('#mine-clear').addEventListener('click', async () => {
 });
 async function quietFbCount() {   // on load: only says that something was released, never shows marks before the name check
   const mine = mineList().filter(m => !m.pending); if (!mine.length) return;
-  try { const items = await fetchFb(mine.slice(-10)); const n = items.filter(x => x.released).length; if (n && !FB_WHO) fbSay(`Your teacher has released feedback for ${n} set${n > 1 ? 's' : ''} on this device. Type your name to open it.`, 'ok'); } catch (e) {}
+  try { const items = await fetchFb(mine.slice(-10)), rel = new Set(items.filter(x => x.released).map(x => x.clientId)); const n = mineSubs().filter(m => m.cids.every(c => rel.has(c))).length; if (n && !FB_WHO) fbSay(`Your teacher has released feedback for ${n} submission${n > 1 ? 's' : ''} on this device. Type your name to open it.`, 'ok'); } catch (e) {}
 }
 
 /* ====================== CLASS REPORT ====================== */
 let REP = [];
-const promptOf = r => { const m = (r.answers || [])[0] || {}; return PROMPTS[m.p] ? m.p : (PROMPTS[r.assign] ? r.assign : ''); };
+const promptOf = r => { const m = (r.answers || [])[0] || {}, p = combo(m.p) || combo(r.assign); return p ? p.id : ''; };
 function cleanRows(rows) {
   const seen = new Set();
   // students type the same class many ways ("CK1-51", "CK1 - 51", "ck1 51"): group by letters+digits only, show the most used spelling
   const key = x => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, ''), freq = {}, canon = {};
   (rows || []).forEach(r => { if (!r) return; const c = normClass(r.sid), k = key(c); freq[k] = freq[k] || {}; freq[k][c] = (freq[k][c] || 0) + 1; });
   Object.keys(freq).forEach(k => { canon[k] = Object.keys(freq[k]).sort((a, b) => freq[k][b] - freq[k][a] || (b.includes('-') - a.includes('-')) || a.localeCompare(b))[0]; });
-  return (rows || []).filter(r => r && r.name && promptOf(r)).map(r => Object.assign({}, r, { sid: canon[key(normClass(r.sid))] || normClass(r.sid), correct: +r.correct || 0, total: +r.total || 4, words: +(r.wwords && r.wwords.W1) || 0, timeSec: +r.timeSec || 0, pid: promptOf(r) }))
-    .filter(r => { const k = r.clientId + '|' + r.submittedAt; if (seen.has(k)) return false; seen.add(k); return true; })
-    .sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
+  const list = (rows || []).filter(r => r && r.name && promptOf(r)).map(r => Object.assign({}, r, { sid: canon[key(normClass(r.sid))] || normClass(r.sid), correct: +r.correct || 0, total: +r.total || 4, words: +(r.wwords && r.wwords.W1) || 0, timeSec: +r.timeSec || 0, pid: promptOf(r) }))
+    .filter(r => { const k = r.clientId + '|' + r.submittedAt; if (seen.has(k)) return false; seen.add(k); return true; });
+  return groupSittings(list).sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
+}
+/* rows sent before 28/10: an assigned sitting went as one row per set. Rows with the same name, class and class code,
+   one set each, assigned (mode exam) and sent within 2 minutes are ONE submission: one line, one review, one mark */
+function groupSittings(rows) {
+  const out = [], open = {};
+  rows.slice().sort((a, b) => String(a.submittedAt).localeCompare(String(b.submittedAt))).forEach(r => {
+    if (r.mode !== 'exam' || pidsOf(r.pid).length !== 1) { out.push(r); return; }
+    const k = norm(r.name) + '|' + r.sid + '|' + normCode(r.assign), g = open[k];
+    if (g && !g.ids.includes(r.pid) && Date.parse(r.submittedAt) - Date.parse(g.rows[0].submittedAt) <= LEGACY_GAP) { g.rows.push(r); g.ids.push(r.pid); return; }
+    out.push(open[k] = { grp: 1, rows: [r], ids: [r.pid] });
+  });
+  return out.map(g => !g.grp ? g : g.rows.length === 1 ? g.rows[0] : mergeRows(g.rows));
+}
+function mergeRows(rs) {
+  const ids = ORDER.filter(id => rs.some(r => r.pid === id)), rows = ids.map(id => rs.find(r => r.pid === id)), first = rs[0];
+  let text = '', off = 0; const parts = [], answers = [{ p: ids.join(','), t: 'multi' }];
+  rows.forEach((r, i) => { const head = setHead(r.pid) + '\n', t = (r.writing && r.writing.W1) || '';
+    if (i) text += '\n\n'; const s0 = text.length + head.length; text += head + t; parts.push({ row: r, pid: r.pid, s: s0, e: text.length });
+    (r.answers || []).slice(1).forEach(a => { if (a && a.k) answers.push(Object.assign({}, a, { k: (keyNo(a.k) + off) + keyStage(a.k) })); });
+    off += PROMPTS[r.pid].sentences.length; });
+  const sum = k => rows.reduce((a, r) => a + (+r[k] || 0), 0);
+  return syncGroup(Object.assign({}, first, { rows, parts, pid: ids.join(','), writing: { W1: text, W2: '' }, answers, correct: sum('correct'), total: sum('total'), words: sum('words'),
+    timeSec: Math.max(...rows.map(r => r.timeSec)), auto: rows.some(r => r.auto) }));
+}
+function syncGroup(g) {        // the sitting shows its least advanced row (not marked < draft < released)
+  const rank = { new: 0, draft: 1, sent: 2 }, least = g.rows.slice().sort((a, b) => rank[gstate(a)] - rank[gstate(b)])[0];
+  const doc = g.rows.map(r => (r.grading || {}).docUrl).find(Boolean);
+  g.grading = least.grading ? Object.assign({}, least.grading, doc ? { docUrl: doc } : {}) : least.grading;
+  g.gmixed = new Set(g.rows.map(gstate)).size > 1;
+  return g;
+}
+function perSet(r) {           // a submission split back into its sets (for the topic-group table)
+  const p = combo(r.pid); if (!p) return [];
+  if (!p.multi) return [{ id: p.id, type: p.type, correct: r.correct, total: r.total, words: r.words }];
+  const out = p.ids.map(id => ({ id, type: PROMPTS[id].type, correct: 0, total: 0, words: 0 }));
+  (r.answers || []).forEach(a => { if (!a || !a.k) return; const x = p.sentences[keyNo(a.k)]; if (!x) return; const o = out[p.ids.indexOf(x.set)]; o.words += +a.w || 0; if (a.opt) return; o.total++; if (a.ok) o.correct++; });
+  return out;
 }
 function fillClassSelect(sel, rows) { const cur = sel.value, cls = [...new Set(rows.map(r => r.sid).filter(Boolean))].sort(); sel.innerHTML = '<option value="">All classes</option>' + cls.map(c => `<option${c === cur ? ' selected' : ''}>${esc(c)}</option>`).join(''); }
 async function loadReport() {
@@ -2452,14 +2576,15 @@ function renderReport() {
   const students = new Set(rows.map(r => norm(r.name) + '|' + r.sid)).size, avgA = rows.length ? rows.reduce((a, r) => a + r.correct / r.total, 0) / rows.length * 100 : 0, avgW = rows.length ? rows.reduce((a, r) => a + r.words, 0) / rows.length : 0, full = rows.length ? rows.filter(r => r.correct === r.total).length / rows.length * 100 : 0;
   const graded = rows.filter(r => r.grading && r.grading.overall !== null && r.grading.overall !== undefined && r.grading.gradedAt);
   const kpi = (v, l) => `<div class="stat"><div class="big">${v}</div><div class="lbl">${l}</div></div>`;
-  $('#rp-kpis').innerHTML = kpi(rows.length, 'sets submitted') + kpi(students, 'students') + kpi(Math.round(avgA) + '<small>%</small>', 'stage goals met') + kpi(Math.round(avgW), 'average words') + kpi(Math.round(full) + '<small>%</small>', 'meet all required goals') + (isStaff() ? kpi(graded.length ? f1(graded.reduce((a, r) => a + +r.grading.overall, 0) / graded.length) : '—', `average teacher mark (${graded.length} marked)`) : '');
-  $('#rp-types tbody').innerHTML = TYPES.map(T => { const R = rows.filter(r => PROMPTS[r.pid].type === T.id); return `<tr><td>${T.id} · ${esc(T.short)}</td><td class="n">${R.length}</td><td class="n">${R.length ? Math.round(R.reduce((a, r) => a + r.correct / r.total, 0) / R.length * 100) + '%' : '—'}</td><td class="n">${R.length ? Math.round(R.filter(r => r.correct === r.total).length / R.length * 100) + '%' : '—'}</td><td class="n">${R.length ? Math.round(R.reduce((a, r) => a + r.words, 0) / R.length) : '—'}</td></tr>`; }).join('');
-  const acc = STAGES.map(S => { let n = 0, ok = 0; rows.forEach(r => (r.answers || []).forEach(a => { if (a && a.k && a.k.slice(1) === S.k && (!S.opt || a.w)) { n++; if (a.ok) ok++; } })); return { S, n, pct: n ? ok / n * 100 : null }; }).filter(x => x.n).sort((a, b) => a.pct - b.pct);
+  $('#rp-kpis').innerHTML = kpi(rows.length, 'submissions') + kpi(students, 'students') + kpi(Math.round(avgA) + '<small>%</small>', 'stage goals met') + kpi(Math.round(avgW), 'average words') + kpi(Math.round(full) + '<small>%</small>', 'meet all required goals') + (isStaff() ? kpi(graded.length ? f1(graded.reduce((a, r) => a + +r.grading.overall, 0) / graded.length) : '—', `average teacher mark (${graded.length} marked)`) : '');
+  const sets = rows.flatMap(perSet);
+  $('#rp-types tbody').innerHTML = TYPES.map(T => { const R = sets.filter(r => r.type === T.id); return `<tr><td>${T.id} · ${esc(T.short)}</td><td class="n">${R.length}</td><td class="n">${R.length ? Math.round(R.reduce((a, r) => a + r.correct / r.total, 0) / R.length * 100) + '%' : '—'}</td><td class="n">${R.length ? Math.round(R.filter(r => r.correct === r.total).length / R.length * 100) + '%' : '—'}</td><td class="n">${R.length ? Math.round(R.reduce((a, r) => a + r.words, 0) / R.length) : '—'}</td></tr>`; }).join('');
+  const acc = STAGES.map(S => { let n = 0, ok = 0; rows.forEach(r => (r.answers || []).forEach(a => { if (a && a.k && keyStage(a.k) === S.k && (!S.opt || a.w)) { n++; if (a.ok) ok++; } })); return { S, n, pct: n ? ok / n * 100 : null }; }).filter(x => x.n).sort((a, b) => a.pct - b.pct);
   $('#rp-bars').innerHTML = acc.length ? acc.map(x => `<div class="bar"><div class="n">Stage ${x.S.n} · ${esc(x.S.t)}${x.S.opt ? ' (optional, when tried)' : ''}</div><div class="t"><div class="f${x.pct < 60 ? ' low' : ''}" style="width:${x.pct}%"></div></div><div class="v">${Math.round(x.pct)}%</div></div>`).join('') : '<p class="empty">No data yet.</p>';
   if (!(SET.showRanking || isStaff())) { $('#rank-box').innerHTML = '<p class="muted">The ranking is hidden by the teacher.</p>'; return; }
   const best = new Map(); rows.forEach(r => { const k = norm(r.name) + '|' + r.sid, b = best.get(k); const sc = r.correct / r.total; if (!b) best.set(k, { name: r.name, sid: r.sid, best: sc, n: 1, words: r.words }); else { b.n++; if (sc > b.best || (sc === b.best && r.words > b.words)) { b.best = sc; b.words = r.words; } } });
   const R = [...best.values()].sort((a, b) => b.best - a.best || b.n - a.n || b.words - a.words).slice(0, 30);
-  $('#rank-box').innerHTML = R.length ? `<div class="tablewrap"><table class="tbl"><thead><tr><th class="n">#</th><th>Name</th><th>Class</th><th class="n">Best stage goals</th><th class="n">Sets</th></tr></thead><tbody>${R.map((x, i) => `<tr><td class="n">${i + 1}</td><td>${esc(x.name)}</td><td>${esc(x.sid)}</td><td class="n">${Math.round(x.best * 100)}%</td><td class="n">${x.n}</td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">No data yet.</p>';
+  $('#rank-box').innerHTML = R.length ? `<div class="tablewrap"><table class="tbl"><thead><tr><th class="n">#</th><th>Name</th><th>Class</th><th class="n">Best stage goals</th><th class="n">Submissions</th></tr></thead><tbody>${R.map((x, i) => `<tr><td class="n">${i + 1}</td><td>${esc(x.name)}</td><td>${esc(x.sid)}</td><td class="n">${Math.round(x.best * 100)}%</td><td class="n">${x.n}</td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">No data yet.</p>';
 }
 
 /* ====================== STAFF ====================== */
@@ -2562,46 +2687,50 @@ async function loadSubs() {
   catch (e) { $('#subs-status').textContent = 'Could not load: ' + (e.message || 'error'); }
 }
 const gstate = r => { const g = r.grading; return !g || !g.gradedAt ? 'new' : g.released ? 'sent' : 'draft'; };
-function filteredSubs() { const c = $('#f-class').value, t = $('#f-type').value, s = $('#f-status').value; return RAW.filter(r => (!c || r.sid === c) && (!t || PROMPTS[r.pid].type === t) && (!s || gstate(r) === s)); }
+/* group (A) or one set (A1): a submission matches when it contains that group / set */
+$('#f-type').insertAdjacentHTML('beforeend', '<optgroup label="One set">' + ORDER.map(id => `<option value="${id}">${id} · ${esc(PROMPTS[id].topic)}</option>`).join('') + '</optgroup>');
+const hasSet = (r, t) => pidsOf(r.pid).some(id => t.length === 1 ? PROMPTS[id].type === t : id === t);
+function filteredSubs() { const c = $('#f-class').value, t = $('#f-type').value, s = $('#f-status').value; return RAW.filter(r => (!c || r.sid === c) && (!t || hasSet(r, t)) && (!s || gstate(r) === s)); }
 function renderSubs() {
   batchBtn(); if (!$('#subs-tbl')) return; const L = filteredSubs(), adm = isAdmin();
-  $('#subs-status').textContent = BATCH && BATCH.msg ? BATCH.msg : L.length + ' of ' + RAW.length + ' set' + (RAW.length === 1 ? '' : 's');
+  $('#subs-status').textContent = BATCH && BATCH.msg ? BATCH.msg : L.length + ' of ' + RAW.length + ' submission' + (RAW.length === 1 ? '' : 's');
   $('#subs-tbl tbody').innerHTML = L.length ? L.map(r => { const i = RAW.indexOf(r), g = r.grading || {}, s = gstate(r);
-    return `<tr><td>${fmtDate(r.submittedAt)}${r.auto ? ' <span class="att">time up</span>' : ''}${r.mode === 'exam' ? ' <span class="att">assigned</span>' : ''}</td><td>${esc(r.name)}</td><td>${esc(r.sid)}</td><td class="wrap" style="min-width:150px">${esc(r.pid)} <span class="muted small">${esc(PROMPTS[r.pid].title)}</span></td><td class="n">${r.correct}/${r.total}</td><td class="n">${r.words}</td><td class="n">${mmss(r.timeSec)}</td><td>${s === 'new' ? '<span class="chip mu">not marked</span>' : `<b>${f1(g.overall)}</b> <span class="chip ${s === 'sent' ? 'g' : 'o'}">${s === 'sent' ? 'released' : 'draft'}</span>`}</td><td><div class="row" style="flex-wrap:nowrap"><button class="btn primary small" data-review="${i}">Review</button>${adm ? `<button class="btn danger small" data-del="${i}">Delete</button>` : ''}</div></td></tr>`; }).join('') : '<tr><td colspan="9" class="empty">No sets match.</td></tr>';
+    return `<tr><td>${fmtDate(r.submittedAt)}${r.auto ? ' <span class="att">time up</span>' : ''}${r.mode === 'exam' ? ' <span class="att">assigned</span>' : ''}</td><td>${esc(r.name)}</td><td>${esc(r.sid)}</td><td class="wrap set-cell">${pidsOf(r.pid).map(id => `<span class="set-i"><b>${id}</b> ${esc(PROMPTS[id].topic)}</span>`).join('')}</td><td class="n">${r.correct}/${r.total}</td><td class="n">${r.words}</td><td class="n">${mmss(r.timeSec)}</td><td>${s === 'new' ? '<span class="chip mu">not marked</span>' : `<b>${f1(g.overall)}</b> <span class="chip ${s === 'sent' ? 'g' : 'o'}">${s === 'sent' ? 'released' : 'draft'}</span>`}${r.gmixed ? ' <span class="chip o" title="The rows of this sitting were marked differently – open Review and save once">mixed</span>' : ''}</td><td><button class="btn primary small" data-review="${i}">Review</button></td><td>${adm ? `<button class="btn danger small" data-del="${i}">Delete</button>` : ''}</td></tr>`; }).join('') : '<tr><td colspan="10" class="empty">No submissions match.</td></tr>';
 }
 ['#f-class', '#f-type', '#f-status'].forEach(s => $(s).addEventListener('change', renderSubs));
 $('#btn-subs-refresh').addEventListener('click', loadSubs);
 $('#subs-tbl').addEventListener('click', async e => {
   const v = e.target.closest('[data-review]'); if (v) { openTeacher(RAW[+v.dataset.review]); return; }
   const d = e.target.closest('[data-del]'); if (!d) return; const r = RAW[+d.dataset.del]; if (!r) return;
-  if (!(await ask(`Delete the set by ${r.name} (${r.pid}, ${fmtDate(r.submittedAt)})? This cannot be undone.`, 'Delete'))) return;
-  const j = await api('delete', { clientId: r.clientId, submittedAt: r.submittedAt }); if (!j.ok) { alert('Could not delete: ' + (j.error || 'error')); return; } loadSubs();
+  if (!(await ask(`Delete the submission by ${r.name} (${pidsOf(r.pid).join(', ')}, ${fmtDate(r.submittedAt)})? This cannot be undone.`, 'Delete'))) return;
+  try { await eachRow(r, row => api('delete', { clientId: row.clientId, submittedAt: row.submittedAt }), (i, n) => { $('#subs-status').textContent = `Deleting row ${i + 1} of ${n}…`; }); }
+  catch (e2) { alert('Could not delete: ' + (e2.message || 'error')); } loadSubs();
 });
-$('#btn-clear-all').addEventListener('click', async () => { if (!(await ask('Delete ALL sets and marks for this practice? This cannot be undone.', 'Delete all'))) return; const j = await api('clear'); if (!j.ok) { alert('Could not delete: ' + (j.error || 'error')); return; } loadSubs(); });
+$('#btn-clear-all').addEventListener('click', async () => { if (!(await ask('Delete ALL submissions and marks for this practice? This cannot be undone.', 'Delete all'))) return; const j = await api('clear'); if (!j.ok) { alert('Could not delete: ' + (j.error || 'error')); return; } loadSubs(); });
 $('#btn-subs-csv').addEventListener('click', () => {
-  // one row per set in the current filter, with everything the teacher needs offline: analysis per step, marks, comments, numbered issues, release, Doc, the set itself
+  // one row per submission in the current filter (a class sitting with several sets = one row), with everything the teacher needs offline: analysis per step, marks, comments, numbered issues, release, Doc, the set itself
   const q = v => { let x = String(v === null || v === undefined ? '' : v); if (/^[=+\-@\t\r]/.test(x)) x = "'" + x; return '"' + x.replace(/"/g, '""') + '"'; };
   const iso = v => { const d = v ? new Date(v) : null; if (!d || isNaN(d)) return ''; const z = n => String(n).padStart(2, '0'); return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + z(d.getHours()) + ':' + z(d.getMinutes()); };
+  const L = filteredSubs(), SN = [...Array(Math.max(2, ...L.map(r => (combo(r.pid) || { sentences: [] }).sentences.length))).keys()];   // sentences are numbered across the submission (3 sets = sentences 1–6)
   const head = ['Submitted', 'Name', 'Class / ID', 'Assigned class', 'Set', 'Topic', 'Type', 'Mode', 'Auto-submitted (time up)', 'Time (min)', 'Words',
-    'Required stage goals met', 'Required stage goals total', 'Stage 4 bonus (attempted / met)'].concat([0, 1].flatMap(i => STAGES.map(S => 'Sentence ' + (i + 1) + ' · Stage ' + S.n))).concat(['Status', 'Graded by', 'Graded at', 'Mark', 'Task fulfilment', 'Organization', 'Vocabulary', 'Grammar',
-    'Overall comment', 'Strengths', 'Priorities', 'Suggested lesson', 'Issues (count)', 'Issues (numbered)', 'Released at', 'Google Doc', 'Text']);
-  const L = filteredSubs();
+    'Required stage goals met', 'Required stage goals total', 'Stage 4 bonus (attempted / met)'].concat(SN.flatMap(i => STAGES.map(S => 'Sentence ' + (i + 1) + ' · Stage ' + S.n))).concat(['Status', 'Graded by', 'Graded at', 'Mark', 'Task fulfilment', 'Organization', 'Vocabulary', 'Grammar',
+    'Overall comment', 'Strengths', 'Priorities', 'Suggested lesson', 'Issues (count)', 'Issues (numbered)', 'Released at', 'Google Doc', 'Rows on the class sheet', 'Text']);
   const lines = [head.map(q).join(',')].concat(L.map(r => {
-    const g = r.grading || {}, st = g.gradedAt ? stFromFeedback((g.feedback || {}).W1, (g.feedback || {}).general) : null, b = st ? st.bands : {}, p = PROMPTS[r.pid], text = (r.writing || {}).W1 || '';
+    const g = r.grading || {}, st = g.gradedAt ? stFromFeedback((g.feedback || {}).W1, (g.feedback || {}).general) : null, b = st ? st.bands : {}, p = combo(r.pid), text = (r.writing || {}).W1 || '';
     const ok = {}, w = {}; (r.answers || []).forEach(a => { if (a && a.k) { ok[a.k] = !!a.ok; w[a.k] = +a.w || 0; } });
-    const steps = [0, 1].flatMap(i => STAGES.map(S => ok[i + S.k] === undefined ? '' : S.opt && !w[i + S.k] ? 'not attempted (optional)' : ok[i + S.k] ? 'met' : 'not met'));
+    const steps = SN.flatMap(i => STAGES.map(S => ok[i + S.k] === undefined ? '' : S.opt && !w[i + S.k] ? 'not attempted (optional)' : ok[i + S.k] ? 'met' : 'not met'));
     const bo = (r.answers || []).filter(a => a && a.opt), bonus = bo.length ? bo.filter(a => a.w).length + ' / ' + bo.filter(a => a.ok).length : '';
     const IL = st ? orderIssues(st) : [];      // same numbering as the review screen
     const iss = IL.map(x => { const a = x.a; return x.n + '. [' + (CAT[a.c] || a.c) + (a.p ? '' : ' · minor') + (a.ai ? ' · AI' : '') + '] ' + (x.kind === 'a' ? '"' + (text.slice(a.s, a.e) || a.q || '') + '" – ' : '') + a.m + (a.f ? ' → ' + a.f : ''); }).join('\n');
-    return [iso(r.submittedAt), r.name, r.sid, r.assign || '', r.pid, p.topic, p.type, r.mode || '', r.auto ? 'yes' : '', (r.timeSec / 60).toFixed(1), r.words,
+    return [iso(r.submittedAt), r.name, r.sid, r.assign || '', pidsOf(r.pid).join(' · '), pIds(p).map(id => PROMPTS[id].topic).join(' · '), pIds(p).map(id => PROMPTS[id].type).join(' · '), r.mode || '', r.auto ? 'yes' : '', (r.timeSec / 60).toFixed(1), r.words,
       r.correct, r.total, bonus].concat(steps).concat([gstate(r), g.gradedBy || '', iso(g.gradedAt), g.gradedAt ? g.overall : '', b.TF, b.ORG, b.VOC, b.GRA,
       st ? st.comment : '', st ? st.strengths.join('\n') : '', st ? st.improve.join('\n') : '', st && LESSONS[st.lesson] ? LESSONS[st.lesson][0] : '', st ? IL.length : '', iss,
-      g.released ? iso(g.releasedAt) : '', g.docUrl || '', text]).map(q).join(',');
+      g.released ? iso(g.releasedAt) : '', g.docUrl || '', r.rows ? r.rows.length : 1, text]).map(q).join(',');
   }));
   const tag = [$('#f-class').value, $('#f-type').value && 'type-' + $('#f-type').value, $('#f-status').value].filter(Boolean).join('-');
   const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = CONFIG.CSV_PREFIX + (tag ? '-' + tag.replace(/[^\w-]+/g, '_') : '-all') + '-' + new Date().toISOString().slice(0, 10) + '.csv'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  $('#subs-status').textContent = 'CSV: ' + L.length + ' of ' + RAW.length + ' set' + (RAW.length === 1 ? '' : 's') + (L.length < RAW.length ? ' (filtered – clear the filters to export all)' : '');
+  $('#subs-status').textContent = 'CSV: ' + L.length + ' of ' + RAW.length + ' submission' + (RAW.length === 1 ? '' : 's') + (L.length < RAW.length ? ' (filtered – clear the filters to export all)' : '');
 });
 
 /* ====================== CONFIRM DIALOG ====================== */
